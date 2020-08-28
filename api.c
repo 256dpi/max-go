@@ -48,7 +48,7 @@ static void bridge_bang(t_bridge *bridge) {
   long inlet = proxy_getinlet(&bridge->obj);
 
   // dispatch message
-  gomaxMessage(bridge->name->s_name, bridge->ref, "bang", inlet, 0, NULL);
+  gomaxMessage(bridge->name->s_name, bridge->ref, "$bang", inlet, 0, NULL);
 }
 
 static void bridge_int(t_bridge *bridge, long n) {
@@ -60,7 +60,7 @@ static void bridge_int(t_bridge *bridge, long n) {
   atom_setlong(args, n);
 
   // dispatch message
-  gomaxMessage(bridge->name->s_name, bridge->ref, "int", inlet, 1, args);
+  gomaxMessage(bridge->name->s_name, bridge->ref, "$int", inlet, 1, args);
 }
 
 static void bridge_float(t_bridge *bridge, double n) {
@@ -72,7 +72,7 @@ static void bridge_float(t_bridge *bridge, double n) {
   atom_setfloat(args, n);
 
   // dispatch message
-  gomaxMessage(bridge->name->s_name, bridge->ref, "float", inlet, 1, args);
+  gomaxMessage(bridge->name->s_name, bridge->ref, "$float", inlet, 1, args);
 }
 
 static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc,
@@ -86,7 +86,7 @@ static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc,
 }
 
 static void bridge_dblclick(t_bridge *bridge) {
-  gomaxMessage(bridge->name->s_name, bridge->ref, "dblclick", 0, 0, NULL);
+  gomaxMessage(bridge->name->s_name, bridge->ref, "$dblclick", 0, 0, NULL);
 }
 
 static void bridge_free(t_bridge *bridge) {
