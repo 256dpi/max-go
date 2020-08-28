@@ -54,7 +54,7 @@ var freeMethods = map[string]func(uintptr){}
 
 //export gomaxGet
 func gomaxGet(name *C.char) *C.t_class {
-	return classes[C.GoString(name)].raw
+	return (*C.t_class)(classes[C.GoString(name)].ptr)
 }
 
 //export gomaxInit
@@ -81,7 +81,7 @@ func gomaxFree(name *C.char, ptr uintptr) {
 
 // Class is a Max object class.
 type Class struct {
-	raw *C.t_class
+	ptr unsafe.Pointer
 	reg bool
 }
 
@@ -93,7 +93,7 @@ func NewClass(name string, init func(Object) uintptr, handler func(uintptr, stri
 	freeMethods[name] = free
 
 	// create class
-	class := Class{raw: C.maxgo_class_new(C.CString(name))}
+	class := Class{ptr: unsafe.Pointer(C.maxgo_class_new(C.CString(name)))}
 
 	// register class
 	classes[name] = class
@@ -109,7 +109,7 @@ func (c Class) AddMethod(name string) {
 	}
 
 	// add method
-	C.maxgo_class_add_method(c.raw, C.CString(name))
+	C.maxgo_class_add_method((*C.t_class)(c.ptr), C.CString(name))
 }
 
 // Register will register the class if not already registered.
@@ -120,90 +120,90 @@ func (c Class) Register() {
 	}
 
 	// register class
-	C.class_register(C.CLASS_BOX, c.raw)
+	C.class_register(C.CLASS_BOX, (*C.t_class)(c.ptr))
 }
 
 /* Objects */
 
 // Object is single Max object.
 type Object struct {
-	raw unsafe.Pointer
+	ptr unsafe.Pointer
 }
 
 // Inlet is a single Max inlet.
 type Inlet struct {
-	raw unsafe.Pointer
+	ptr unsafe.Pointer
 }
 
 // Outlet is a single MAx outlet.
 type Outlet struct {
-	raw unsafe.Pointer
+	ptr unsafe.Pointer
 }
 
 // AnyIn will create a generic inlet.
 func (o *Object) AnyIn() Inlet {
-	return Inlet{C.inlet_new(o.raw, nil)}
+	return Inlet{C.inlet_new(o.ptr, nil)}
 }
 
 // BangIn will create a bang inlet.
 func (o *Object) BangIn() Inlet {
-	return Inlet{C.inlet_new(o.raw, C.CString("bang"))}
+	return Inlet{C.inlet_new(o.ptr, C.CString("bang"))}
 }
 
 // IntIn will create an int inlet.
 func (o *Object) IntIn() Inlet {
-	return Inlet{C.intin(o.raw, C.short(1))}
+	return Inlet{C.intin(o.ptr, C.short(1))}
 }
 
 // FloatIn will create a float inlet.
 func (o *Object) FloatIn() Inlet {
-	return Inlet{C.floatin(o.raw, C.short(1))}
+	return Inlet{C.floatin(o.ptr, C.short(1))}
 }
 
 // AnyOut will create a generic outlet.
 func (o *Object) AnyOut() Outlet {
-	return Outlet{C.outlet_new(o.raw, nil)}
+	return Outlet{C.outlet_new(o.ptr, nil)}
 }
 
 // BangOut will create a bang outlet.
 func (o *Object) BangOut() Outlet {
-	return Outlet{C.bangout(o.raw)}
+	return Outlet{C.bangout(o.ptr)}
 }
 
 // IntOut will create an int outlet.
 func (o *Object) IntOut() Outlet {
-	return Outlet{C.intout(o.raw)}
+	return Outlet{C.intout(o.ptr)}
 }
 
 // FloatOut will create a float outlet.
 func (o *Object) FloatOut() Outlet {
-	return Outlet{C.floatout(o.raw)}
+	return Outlet{C.floatout(o.ptr)}
 }
 
 // ListOut will create a list outlet.
 func (o *Object) ListOut() Outlet {
-	return Outlet{C.listout(o.raw)}
+	return Outlet{C.listout(o.ptr)}
 }
 
 // Bang will send a bang.
 func (o Outlet) Bang() {
-	C.outlet_bang(o.raw)
+	C.outlet_bang(o.ptr)
 }
 
 // Int will send and int.
 func (o Outlet) Int(n int64) {
-	C.outlet_int(o.raw, C.longlong(n))
+	C.outlet_int(o.ptr, C.longlong(n))
 }
 
 // Float will send a float.
 func (o Outlet) Float(n float64) {
-	C.outlet_float(o.raw, C.double(n))
+	C.outlet_float(o.ptr, C.double(n))
 }
 
 // List will send a list.
 func (o Outlet) List(atoms []Atom) {
 	argc, argv := encodeAtoms(atoms)
-	C.outlet_list(o.raw, nil, C.short(argc), argv)
+	C.outlet_list(o.ptr, nil, C.short(argc), argv)
 }
 
 // TODO: Support proxies?
