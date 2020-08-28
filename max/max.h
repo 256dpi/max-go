@@ -1,7 +1,9 @@
 #ifndef API
 #define API 1
 
+#ifdef MAC_VERSION
 #include <Carbon/Carbon.h>
+#endif
 
 #include <ext.h>
 
