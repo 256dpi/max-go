@@ -16,6 +16,8 @@ build:
 
 fmt:
 	go fmt .
+	go vet .
+	golint .
 	clang-format -i *.c *.h
 
 

@@ -17,6 +17,7 @@ import (
 
 /* Types */
 
+// Atom is a Max a of type int64, float64 or string.
 type Atom = interface{}
 
 /* Basic */
@@ -41,20 +42,20 @@ func Pretty(a ...interface{}) {
 	Log(pretty.Sprint(a...))
 }
 
-// Sym is a Max symbol.
-type Sym struct {
-	raw *C.t_symbol
-}
-
-// Name returns the symbol name.
-func (s Sym) Name() string {
-	return C.GoString(s.raw.s_name)
-}
-
-// GenSym will retrieve the unique symbol for the provided string.
-func GenSym(str string) Sym {
-	return Sym{C.gensym(C.CString(str))}
-}
+// // Sym is a Max symbol.
+// type Sym struct {
+// 	raw *C.t_symbol
+// }
+//
+// // Name returns the symbol name.
+// func (s Sym) Name() string {
+// 	return C.GoString(s.raw.s_name)
+// }
+//
+// // GenSym will retrieve the unique symbol for the provided string.
+// func GenSym(str string) Sym {
+// 	return Sym{C.gensym(C.CString(str))}
+// }
 
 /* Classes */
 
@@ -74,7 +75,7 @@ func gomaxInit(name *C.char, obj unsafe.Pointer) unsafe.Pointer {
 }
 
 //export gomaxMessage
-func gomaxMessage(name *C.char, ptr unsafe.Pointer, msg *C.char, inlet int32, argc int32, argv *C.t_atom) {
+func gomaxMessage(name *C.char, ptr unsafe.Pointer, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
 	atoms := decodeAtoms(argc, argv)
 	handler := handlers[C.GoString(name)]
 	if handler != nil {
@@ -90,10 +91,13 @@ func gomaxFree(name *C.char, ptr unsafe.Pointer) {
 	}
 }
 
+// Class is a Max object class.
 type Class struct {
 	raw *C.t_class
+	reg bool
 }
 
+// NewClass will create a new class with the specified name using the provided callbacks to initialize and free objects.
 func NewClass(name string, init func(Object) unsafe.Pointer, handler func(unsafe.Pointer, string, int, []Atom), free func(unsafe.Pointer)) Class {
 	// register methods
 	initMethods[name] = init
@@ -101,7 +105,7 @@ func NewClass(name string, init func(Object) unsafe.Pointer, handler func(unsafe
 	freeMethods[name] = free
 
 	// create class
-	class := Class{C.maxgo_class_new(C.CString(name))}
+	class := Class{raw: C.maxgo_class_new(C.CString(name))}
 
 	// register class
 	classes[name] = class
@@ -109,26 +113,41 @@ func NewClass(name string, init func(Object) unsafe.Pointer, handler func(unsafe
 	return class
 }
 
+// AddMethod will add a method with the specified name.
 func (c Class) AddMethod(name string) {
+	// check
+	if c.reg {
+		panic("maxgo: class already registered")
+	}
+
 	// add method
 	C.maxgo_class_add_method(c.raw, C.CString(name))
 }
 
+// Register will register the class if not already registered.
 func (c Class) Register() {
+	// check
+	if c.reg {
+		panic("maxgo: class already registered")
+	}
+
 	// register class
 	C.class_register(C.CLASS_BOX, c.raw)
 }
 
 /* Objects */
 
+// Object is single Max object.
 type Object struct {
 	raw unsafe.Pointer
 }
 
+// Inlet is a single Max inlet.
 type Inlet struct {
 	raw unsafe.Pointer
 }
 
+// Outlet is a single MAx outlet.
 type Outlet struct {
 	raw unsafe.Pointer
 }
@@ -201,7 +220,7 @@ func (o Outlet) List() {
 
 /* Atoms */
 
-func decodeAtoms(argc int32, argv *C.t_atom) []interface{} {
+func decodeAtoms(argc int64, argv *C.t_atom) []interface{} {
 	// cast to slice
 	var list []C.t_atom
 	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&list))
@@ -216,7 +235,7 @@ func decodeAtoms(argc int32, argv *C.t_atom) []interface{} {
 	for _, item := range list {
 		switch item.a_type {
 		case C.A_LONG:
-			atoms = append(atoms, int32(C.atom_getlong(&item)))
+			atoms = append(atoms, int64(C.atom_getlong(&item)))
 		case C.A_FLOAT:
 			atoms = append(atoms, float64(C.atom_getfloat(&item)))
 		case C.A_SYM:
