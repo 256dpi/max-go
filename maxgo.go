@@ -1,14 +1,16 @@
-package main
+package maxgo
 
 import (
 	"reflect"
+
+	"github.com/256dpi/maxgo/max"
 )
 
 // Instance is a generic object instance.
 type Instance interface {
-	Define(Class)
-	Init(Object)
-	Message(string, int, []Atom)
+	Define(max.Class)
+	Init(max.Object)
+	Message(string, int, []max.Atom)
 	Free()
 }
 
@@ -21,7 +23,7 @@ func Register(name string, prototype Instance) {
 	typ := reflect.TypeOf(prototype).Elem()
 
 	// create class
-	class := NewClass(name, func(o Object) uintptr {
+	class := max.NewClass(name, func(o max.Object) uintptr {
 		// create instance
 		value := reflect.New(typ)
 		instance := value.Interface().(Instance)
@@ -33,7 +35,7 @@ func Register(name string, prototype Instance) {
 		instances[value.Pointer()] = instance
 
 		return value.Pointer()
-	}, func(p uintptr, msg string, inlet int, atoms []Atom) {
+	}, func(p uintptr, msg string, inlet int, atoms []max.Atom) {
 		// lookup instance
 		instance := instances[p]
 

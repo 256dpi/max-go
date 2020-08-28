@@ -1,6 +1,6 @@
 #include "_cgo_export.h"
 
-#include "api.h"
+#include "max.h"
 
 /* Basic */
 

@@ -1,10 +1,10 @@
-package main
+package max
 
-// #cgo CFLAGS: -I${SRCDIR}/max-sdk/source/c74support/max-includes
-// #cgo LDFLAGS: -L${SRCDIR}/max-sdk/source/c74support/max-includes
+// #cgo CFLAGS: -I${SRCDIR}/../max-sdk/source/c74support/max-includes
+// #cgo LDFLAGS: -L${SRCDIR}/../max-sdk/source/c74support/max-includes
 // #cgo linux LDFLAGS: -Wl,-unresolved-symbols=ignore-all
 // #cgo darwin LDFLAGS: -Wl,-undefined,dynamic_lookup
-// #include "api.h"
+// #include "max.h"
 import "C"
 
 import (
