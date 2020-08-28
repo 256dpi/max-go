@@ -10,8 +10,9 @@ import (
 
 // Instance is a generic object instance.
 type Instance interface {
-	Init(max.Object)
-	Message(string, int, []max.Atom)
+	Init(obj max.Object)
+	Describe(inlet bool, num int) string
+	Handle(msg string, inlet int, atoms []max.Atom)
 	Free()
 }
 
@@ -40,8 +41,14 @@ func Register(name string, prototype Instance) {
 		// lookup instance
 		instance := instances[p]
 
-		// send message
-		instance.Message(msg, inlet, atoms)
+		// handle message
+		instance.Handle(msg, inlet, atoms)
+	}, func(p uintptr, io int64, i int64) string {
+		// lookup instance
+		instance := instances[p]
+
+		// describe port
+		return instance.Describe(io == 1, int(i))
 	}, func(p uintptr) {
 		// lookup instance
 		instance := instances[p]

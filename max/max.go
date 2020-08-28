@@ -16,8 +16,8 @@ import (
 	"github.com/kr/pretty"
 )
 
-// TODO: Support assistance:
-//  https://cycling74.com/sdk/max-sdk-7.3.3/html/chapter_enhancements.html#chapter_enhancements_assistance
+// TODO: Support hot and cold inlets.
+//  https://cycling74.com/sdk/max-sdk-7.3.3/html/chapter_enhancements.html
 
 /* Types */
 
@@ -51,6 +51,7 @@ func Pretty(a ...interface{}) {
 var classes = map[string]Class{}
 var initMethods = map[string]func(Object) uintptr{}
 var handlers = map[string]func(uintptr, string, int, []Atom){}
+var assists = map[string]func(uintptr, int64, int64)string{}
 var freeMethods = map[string]func(uintptr){}
 
 //export gomaxGet
@@ -72,6 +73,15 @@ func gomaxMessage(name *C.char, ptr uintptr, msg *C.char, inlet int64, argc int6
 	}
 }
 
+//export gomaxAssist
+func gomaxAssist(name *C.char, ptr uintptr, io, i int64) *C.char {
+	assist := assists[C.GoString(name)]
+	if assist != nil {
+		return C.CString(assist(ptr, io, i))
+	}
+	return C.CString("")
+}
+
 //export gomaxFree
 func gomaxFree(name *C.char, ptr uintptr) {
 	free := freeMethods[C.GoString(name)]
@@ -87,10 +97,11 @@ type Class struct {
 }
 
 // NewClass will create a new class with the specified name using the provided callbacks to initialize and free objects.
-func NewClass(name string, init func(Object) uintptr, handler func(uintptr, string, int, []Atom), free func(uintptr)) Class {
+func NewClass(name string, init func(Object) uintptr, handler func(uintptr, string, int, []Atom), assist func(uintptr, int64, int64) string, free func(uintptr)) Class {
 	// register methods
 	initMethods[name] = init
 	handlers[name] = handler
+	assists[name] = assist
 	freeMethods[name] = free
 
 	// create class

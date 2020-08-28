@@ -89,6 +89,12 @@ static void bridge_dblclick(t_bridge *bridge) {
   gomaxMessage(bridge->name->s_name, bridge->ref, "$dblclick", 0, 0, NULL);
 }
 
+static void bridge_assist(t_bridge *bridge, void *b, long io, long i,
+                          char *buf) {
+  const char *str = gomaxAssist(bridge->name->s_name, bridge->ref, io, i);
+  strncpy_zero(buf, str, 512);
+}
+
 static void bridge_free(t_bridge *bridge) {
   // free object
   gomaxFree(bridge->name->s_name, bridge->ref);
@@ -108,6 +114,7 @@ t_class *maxgo_class_new(const char *name) {
   class_addmethod(class, (method)bridge_float, "float", A_FLOAT, 0);
   class_addmethod(class, (method)bridge_gimme, "anything", A_GIMME, 0);
   class_addmethod(class, (method)bridge_dblclick, "dblclick", 0);
+  class_addmethod(class, (method)bridge_assist, "assist", A_CANT, 0);
 
   // TODO: How to handle multi value messages that do not start with a symbol?
   //  -> Now they are dispatched after each other.

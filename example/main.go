@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"C"
 
 	"github.com/256dpi/maxgo"
@@ -11,15 +13,25 @@ type instance struct {
 	out max.Outlet
 }
 
-func (i *instance) Init(object max.Object) {
-	max.Pretty("init", i, object)
+func (i *instance) Init(obj max.Object) {
+	max.Pretty("init", i, obj)
 
-	object.AnyIn()
-	i.out = object.AnyOut()
+	obj.AnyIn()
+	i.out = obj.AnyOut()
 }
 
-func (i *instance) Message(msg string, inlet int, atoms []max.Atom) {
-	max.Pretty("message", i, msg, inlet, atoms)
+func (i *instance) Describe(inlet bool, num int) string {
+	max.Pretty("describe", i, inlet, num)
+
+	if inlet {
+		return fmt.Sprintf("input #%d", num)
+	} else {
+		return fmt.Sprintf("output #%d", num)
+	}
+}
+
+func (i *instance) Handle(msg string, inlet int, atoms []max.Atom) {
+	max.Pretty("handle", i, msg, inlet, atoms)
 
 	i.out.List(atoms)
 }
