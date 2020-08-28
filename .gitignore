@@ -1,0 +1,4 @@
+max-sdk/
+*.mxo
+maxgo
+maxgo.h
