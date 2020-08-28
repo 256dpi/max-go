@@ -11,10 +11,6 @@ type instance struct {
 	out max.Outlet
 }
 
-func (i *instance) Define(class max.Class) {
-	max.Pretty("define", i, class)
-}
-
 func (i *instance) Init(object max.Object) {
 	max.Pretty("init", i, object)
 
@@ -34,9 +30,9 @@ func (i *instance) Free() {
 
 //export ext_main
 func ext_main(uintptr) {
-	maxgo.Register("maxgo", &instance{})
+	main()
 }
 
 func main() {
-	// not called by Max
+	maxgo.Register("maxgo", &instance{})
 }

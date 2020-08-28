@@ -6,9 +6,10 @@ import (
 	"github.com/256dpi/maxgo/max"
 )
 
+// TODO: Cross compile and bundle CLI utility.
+
 // Instance is a generic object instance.
 type Instance interface {
-	Define(max.Class)
 	Init(max.Object)
 	Message(string, int, []max.Atom)
 	Free()
@@ -51,8 +52,7 @@ func Register(name string, prototype Instance) {
 		delete(instances, p)
 	})
 
-	// define class
-	prototype.Define(class)
+	// TODO: Add methods?
 
 	// register class
 	class.Register()
