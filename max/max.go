@@ -49,10 +49,10 @@ func Pretty(a ...interface{}) {
 /* Classes */
 
 var classes = map[string]Class{}
-var initMethods = map[string]func(Object) uintptr{}
+var initializers = map[string]func(Object) uintptr{}
 var handlers = map[string]func(uintptr, string, int, []Atom){}
 var assists = map[string]func(uintptr, int64, int64)string{}
-var freeMethods = map[string]func(uintptr){}
+var finalizers = map[string]func(uintptr){}
 
 //export gomaxGet
 func gomaxGet(name *C.char) *C.t_class {
@@ -61,7 +61,7 @@ func gomaxGet(name *C.char) *C.t_class {
 
 //export gomaxInit
 func gomaxInit(name *C.char, obj unsafe.Pointer) uintptr {
-	return initMethods[C.GoString(name)](Object{obj})
+	return initializers[C.GoString(name)](Object{obj})
 }
 
 //export gomaxMessage
@@ -84,7 +84,7 @@ func gomaxAssist(name *C.char, ptr uintptr, io, i int64) *C.char {
 
 //export gomaxFree
 func gomaxFree(name *C.char, ptr uintptr) {
-	free := freeMethods[C.GoString(name)]
+	free := finalizers[C.GoString(name)]
 	if free != nil {
 		free(ptr)
 	}
@@ -99,10 +99,10 @@ type Class struct {
 // NewClass will create a new class with the specified name using the provided callbacks to initialize and free objects.
 func NewClass(name string, init func(Object) uintptr, handler func(uintptr, string, int, []Atom), assist func(uintptr, int64, int64) string, free func(uintptr)) Class {
 	// register methods
-	initMethods[name] = init
+	initializers[name] = init
 	handlers[name] = handler
 	assists[name] = assist
-	freeMethods[name] = free
+	finalizers[name] = free
 
 	// create class
 	class := Class{ptr: unsafe.Pointer(C.maxgo_class_new(C.CString(name)))}
