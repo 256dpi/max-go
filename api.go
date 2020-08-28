@@ -139,52 +139,67 @@ type Outlet struct {
 
 // TODO: Object log (post), error and warn.
 
+// AnyIn will create a generic inlet.
 func (o *Object) AnyIn() Inlet {
 	return Inlet{C.inlet_new(o.raw, nil)}
 }
 
+// BangIn will create a bang inlet.
 func (o *Object) BangIn() Inlet {
 	return Inlet{C.inlet_new(o.raw, C.CString("bang"))}
 }
 
+// IntIn will create an int inlet.
 func (o *Object) IntIn() Inlet {
 	return Inlet{C.intin(o.raw, C.short(1))}
 }
 
+// FloatIn will create a float inlet.
 func (o *Object) FloatIn() Inlet {
 	return Inlet{C.floatin(o.raw, C.short(1))}
 }
 
-// TODO: outlet_new.
+// AnyOut will create a generic outlet.
+func (o *Object) AnyOut() Outlet {
+	return Outlet{C.outlet_new(o.raw, nil)}
+}
 
+// BangOut will create a bang outlet.
 func (o *Object) BangOut() Outlet {
 	return Outlet{C.bangout(o.raw)}
 }
 
+// IntOut will create an int outlet.
 func (o *Object) IntOut() Outlet {
 	return Outlet{C.intout(o.raw)}
 }
 
+// FloatOut will create a float outlet.
 func (o *Object) FloatOut() Outlet {
 	return Outlet{C.floatout(o.raw)}
 }
 
+// ListOut will create a list outlet.
 func (o *Object) ListOut() Outlet {
 	return Outlet{C.listout(o.raw)}
 }
 
+// Bang will send a bang.
 func (o Outlet) Bang() {
 	C.outlet_bang(o.raw)
 }
 
+// Int will send and int.
 func (o Outlet) Int(n int64) {
 	C.outlet_int(o.raw, C.longlong(n))
 }
 
+// Float will send a float.
 func (o Outlet) Float(n float64) {
 	C.outlet_float(o.raw, C.double(n))
 }
 
+// List will send a list.
 func (o Outlet) List(atoms []Atom) {
 	argc, argv := encodeAtoms(atoms)
 	C.outlet_list(o.raw, nil, C.short(argc), argv)
