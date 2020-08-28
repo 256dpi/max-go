@@ -15,6 +15,9 @@ import (
 	"github.com/kr/pretty"
 )
 
+// TODO: Support assistance:
+//  https://cycling74.com/sdk/max-sdk-7.3.3/html/chapter_enhancements.html#chapter_enhancements_assistance
+
 /* Types */
 
 // Atom is a Max a of type int64, float64 or string.
@@ -45,9 +48,9 @@ func Pretty(a ...interface{}) {
 /* Classes */
 
 var classes = map[string]Class{}
-var initMethods = map[string]func(Object) unsafe.Pointer{}
-var handlers = map[string]func(unsafe.Pointer, string, int, []Atom){}
-var freeMethods = map[string]func(unsafe.Pointer){}
+var initMethods = map[string]func(Object) uintptr{}
+var handlers = map[string]func(uintptr, string, int, []Atom){}
+var freeMethods = map[string]func(uintptr){}
 
 //export gomaxGet
 func gomaxGet(name *C.char) *C.t_class {
@@ -55,12 +58,12 @@ func gomaxGet(name *C.char) *C.t_class {
 }
 
 //export gomaxInit
-func gomaxInit(name *C.char, obj unsafe.Pointer) unsafe.Pointer {
+func gomaxInit(name *C.char, obj unsafe.Pointer) uintptr {
 	return initMethods[C.GoString(name)](Object{obj})
 }
 
 //export gomaxMessage
-func gomaxMessage(name *C.char, ptr unsafe.Pointer, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
+func gomaxMessage(name *C.char, ptr uintptr, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
 	atoms := decodeAtoms(argc, argv)
 	handler := handlers[C.GoString(name)]
 	if handler != nil {
@@ -69,7 +72,7 @@ func gomaxMessage(name *C.char, ptr unsafe.Pointer, msg *C.char, inlet int64, ar
 }
 
 //export gomaxFree
-func gomaxFree(name *C.char, ptr unsafe.Pointer) {
+func gomaxFree(name *C.char, ptr uintptr) {
 	free := freeMethods[C.GoString(name)]
 	if free != nil {
 		free(ptr)
@@ -83,7 +86,7 @@ type Class struct {
 }
 
 // NewClass will create a new class with the specified name using the provided callbacks to initialize and free objects.
-func NewClass(name string, init func(Object) unsafe.Pointer, handler func(unsafe.Pointer, string, int, []Atom), free func(unsafe.Pointer)) Class {
+func NewClass(name string, init func(Object) uintptr, handler func(uintptr, string, int, []Atom), free func(uintptr)) Class {
 	// register methods
 	initMethods[name] = init
 	handlers[name] = handler
@@ -248,6 +251,11 @@ func decodeAtoms(argc int64, argv *C.t_atom) []Atom {
 }
 
 func encodeAtoms(atoms []Atom) (argc int64, argv *C.t_atom) {
+	// check length
+	if len(atoms) == 0 {
+		return 0, nil
+	}
+
 	// allocate atom array
 	array := make([]C.t_atom, len(atoms))
 
