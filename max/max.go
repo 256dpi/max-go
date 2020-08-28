@@ -21,7 +21,7 @@ import (
 
 /* Types */
 
-// Atom is a Max a of type int64, float64 or string.
+// Atom is a Max atom of type int64, float64 or string.
 type Atom = interface{}
 
 /* Basic */
