@@ -42,21 +42,6 @@ func Pretty(a ...interface{}) {
 	Log(pretty.Sprint(a...))
 }
 
-// // Sym is a Max symbol.
-// type Sym struct {
-// 	raw *C.t_symbol
-// }
-//
-// // Name returns the symbol name.
-// func (s Sym) Name() string {
-// 	return C.GoString(s.raw.s_name)
-// }
-//
-// // GenSym will retrieve the unique symbol for the provided string.
-// func GenSym(str string) Sym {
-// 	return Sym{C.gensym(C.CString(str))}
-// }
-
 /* Classes */
 
 var classes = map[string]Class{}
@@ -200,8 +185,9 @@ func (o Outlet) Float(n float64) {
 	C.outlet_float(o.raw, C.double(n))
 }
 
-func (o Outlet) List() {
-	// TODO: C.outlet_list(o.raw, nil, argc, argv)
+func (o Outlet) List(atoms []Atom) {
+	argc, argv := encodeAtoms(atoms)
+	C.outlet_list(o.raw, nil, C.short(argc), argv)
 }
 
 // TODO: Support proxies?
@@ -220,7 +206,7 @@ func (o Outlet) List() {
 
 /* Atoms */
 
-func decodeAtoms(argc int64, argv *C.t_atom) []interface{} {
+func decodeAtoms(argc int64, argv *C.t_atom) []Atom {
 	// cast to slice
 	var list []C.t_atom
 	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&list))
@@ -246,4 +232,23 @@ func decodeAtoms(argc int64, argv *C.t_atom) []interface{} {
 	}
 
 	return atoms
+}
+
+func encodeAtoms(atoms []Atom) (argc int64, argv *C.t_atom) {
+	// allocate atom array
+	array := make([]C.t_atom, len(atoms))
+
+	// set atoms
+	for i, atom := range atoms {
+		switch atom := atom.(type) {
+		case int64:
+			C.atom_setlong(&array[i], C.longlong(atom))
+		case float64:
+			C.atom_setfloat(&array[i], C.double(atom))
+		case string:
+			C.atom_setsym(&array[i], C.gensym(C.CString(atom)))
+		}
+	}
+
+	return int64(len(atoms)), &array[0]
 }

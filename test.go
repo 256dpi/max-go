@@ -20,7 +20,7 @@ func test() {
 		object.AnyIn()
 		object.IntOut()
 
-		outlet = object.IntOut()
+		outlet = object.ListOut()
 
 		o := unsafe.Pointer(&foo{})
 		Pretty(o)
@@ -29,7 +29,7 @@ func test() {
 	}, func(ptr unsafe.Pointer, msg string, inlet int, atoms []Atom) {
 		Pretty("handler", ptr, msg, inlet, atoms)
 
-		outlet.Int(1)
+		outlet.List(atoms)
 	}, func(pointer unsafe.Pointer) {
 		Pretty("free", pointer)
 	})
