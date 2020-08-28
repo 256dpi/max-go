@@ -137,8 +137,6 @@ type Outlet struct {
 	raw unsafe.Pointer
 }
 
-// TODO: Object log (post), error and warn.
-
 // AnyIn will create a generic inlet.
 func (o *Object) AnyIn() Inlet {
 	return Inlet{C.inlet_new(o.raw, nil)}
