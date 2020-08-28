@@ -125,18 +125,3 @@ t_class *maxgo_class_new(const char *name) {
 void maxgo_class_add_method(t_class *class, const char *name) {
   class_addmethod(class, (method)bridge_gimme, name, A_GIMME, 0);
 }
-
-/*
-void maxgo_main() {
-  class_addmethod(c, (method)dummy_assist, "assist", A_CANT, 0);
-  CLASS_ATTR_SYM(c, "name", 0, t_dummy, name);
-}
-
-void dummy_assist(t_dummy *x, void *b, long m, long a, char *s) {
-  if (m == ASSIST_INLET) { // inlet
-    sprintf(s, "I am inlet %ld", a);
-  } else { // outlet
-    sprintf(s, "I am outlet %ld", a);
-  }
-}
-*/
