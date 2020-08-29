@@ -22,15 +22,15 @@ import (
 /* Types */
 
 // Type describes an inlet or outlet type.
-type Type int
+type Type string
 
 // The available inlet and outlet types.
 const (
-	Any Type = iota
-	Bang
-	Int
-	Float
-	List
+	Any   Type = "any"
+	Bang  Type = "bang"
+	Int   Type = "int"
+	Float Type = "float"
+	List  Type = "list"
 )
 
 // Atom is a Max atom of type int64, float64 or string.
@@ -162,6 +162,7 @@ type Inlet struct {
 
 // Outlet is a single MAx outlet.
 type Outlet struct {
+	typ Type
 	ptr unsafe.Pointer
 }
 
@@ -187,39 +188,65 @@ func (o *Object) Inlet(typ Type) Inlet {
 func (o *Object) Outlet(typ Type) Outlet {
 	switch typ {
 	case Any:
-		return Outlet{ptr: C.outlet_new(o.ptr, nil)}
+		return Outlet{typ: typ, ptr: C.outlet_new(o.ptr, nil)}
 	case Bang:
-		return Outlet{ptr: C.bangout(o.ptr)}
+		return Outlet{typ: typ, ptr: C.bangout(o.ptr)}
 	case Int:
-		return Outlet{ptr: C.intout(o.ptr)}
+		return Outlet{typ: typ, ptr: C.intout(o.ptr)}
 	case Float:
-		return Outlet{ptr: C.floatout(o.ptr)}
+		return Outlet{typ: typ, ptr: C.floatout(o.ptr)}
 	case List:
-		return Outlet{ptr: C.listout(o.ptr)}
+		return Outlet{typ: typ, ptr: C.listout(o.ptr)}
 	default:
 		panic("invalid outlet type")
 	}
 }
 
+// Any will send any message.
+func (o Outlet) Any(msg string, atoms []Atom) {
+	if o.typ == Any {
+		argc, argv := encodeAtoms(atoms)
+		C.outlet_anything(o.ptr, C.gensym(C.CString(msg)), C.short(argc), argv)
+	} else {
+		Error("any sent to outlet of type %s", o.typ)
+	}
+}
+
 // Bang will send a bang.
 func (o Outlet) Bang() {
-	C.outlet_bang(o.ptr)
+	if o.typ == Bang || o.typ == Any {
+		C.outlet_bang(o.ptr)
+	} else {
+		Error("bang sent to outlet of type %s", o.typ)
+	}
 }
 
 // Int will send and int.
 func (o Outlet) Int(n int64) {
-	C.outlet_int(o.ptr, C.longlong(n))
+	if o.typ == Int || o.typ == Any {
+		C.outlet_int(o.ptr, C.longlong(n))
+	} else {
+		Error("int sent to outlet of type %s", o.typ)
+	}
 }
 
 // Float will send a float.
 func (o Outlet) Float(n float64) {
-	C.outlet_float(o.ptr, C.double(n))
+	if o.typ == Float || o.typ == Any {
+		C.outlet_float(o.ptr, C.double(n))
+	} else {
+		Error("float sent to outlet of type %s", o.typ)
+	}
 }
 
 // List will send a list.
 func (o Outlet) List(atoms []Atom) {
-	argc, argv := encodeAtoms(atoms)
-	C.outlet_list(o.ptr, nil, C.short(argc), argv)
+	if o.typ == List || o.typ == Any {
+		argc, argv := encodeAtoms(atoms)
+		C.outlet_list(o.ptr, nil, C.short(argc), argv)
+	} else {
+		Error("list sent to outlet of type %s", o.typ)
+	}
 }
 
 // TODO: Support proxies?

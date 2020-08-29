@@ -33,7 +33,7 @@ func (i *instance) Describe(inlet bool, num int) string {
 func (i *instance) Handle(msg string, inlet int, data []max.Atom) {
 	max.Pretty("handle", i, msg, inlet, data)
 
-	i.out.List(data)
+	i.out.Any(msg, data)
 }
 
 func (i *instance) Free() {
