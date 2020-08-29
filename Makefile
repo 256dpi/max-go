@@ -1,5 +1,12 @@
-sdk:
-	git clone https://github.com/Cycling74/max-sdk.git
+.PHONY: lib
+
+lib:
+	rm -rf ./lib
+	rm -rf ./sdk
+	git clone https://github.com/Cycling74/max-sdk.git sdk
+	mkdir lib
+	cp -r sdk/source/c74support/max-includes/ ./lib/
+	rm -rf sdk
 
 fmt:
 	go fmt .

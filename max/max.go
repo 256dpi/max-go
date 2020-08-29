@@ -1,10 +1,10 @@
 package max
 
-// #cgo CFLAGS: -I${SRCDIR}/../max-sdk/source/c74support/max-includes
+// #cgo CFLAGS: -I${SRCDIR}/../lib
 // #cgo windows CFLAGS: -DWIN_VERSION=1
 // #cgo darwin CFLAGS: -DMAC_VERSION=1
 // #cgo darwin LDFLAGS: -Wl,-undefined,dynamic_lookup
-// #cgo windows LDFLAGS: -L${SRCDIR}/../max-sdk/source/c74support/max-includes/x64 -lMaxAPI
+// #cgo windows LDFLAGS: -L${SRCDIR}/../lib/x64 -lMaxAPI
 // #include "max.h"
 import "C"
 
