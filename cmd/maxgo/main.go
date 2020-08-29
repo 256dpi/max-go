@@ -8,10 +8,13 @@ import (
 	"os/exec"
 	"path/filepath"
 	"runtime"
+
+	"github.com/otiai10/copy"
 )
 
 var name = flag.String("name", "", "the name of the external")
 var cross = flag.Bool("cross", false, "cross compile for Windows on macOS")
+var install = flag.String("install", "", "install into specified package")
 
 func main() {
 	// parse flags
@@ -45,17 +48,34 @@ func main() {
 		}
 	}
 
-	// build main
+	// build
 	switch runtime.GOOS {
 	case "darwin":
 		buildDarwin()
+		if *cross {
+			crossBuildWindows()
+		}
 	case "windows":
 		buildWindows()
 	}
 
-	// build cross
-	if *cross {
-		crossBuildWindows()
+	// install
+	if *install != "" {
+		// log
+		fmt.Println("==> installing external...")
+
+		// copy external
+		switch runtime.GOOS {
+		case "darwin":
+			user, err := os.UserHomeDir()
+			check(err)
+			dir, err := filepath.Abs(filepath.Join(user, "Documents", "Max 8", "Packages", *install, "externals"))
+			check(err)
+			check(os.MkdirAll(dir, os.ModePerm))
+			check(copy.Copy(filepath.Join(".", "out", *name+".mxo"), filepath.Join(dir, *name+".mxo")))
+		case "windows":
+			panic("not implemented")
+		}
 	}
 
 	// log
@@ -83,11 +103,6 @@ func buildDarwin() {
 
 	// write package info
 	check(ioutil.WriteFile(filepath.Join(".", "out", *name+".mxo", "PkgInfo"), []byte(pkgInfo), os.ModePerm))
-
-	/*
-		rm -rf ~/Documents/Max\ 8/Packages/maxgo/externals/maxgo.mxo
-		cp -r ./maxgo.mxo ~/Documents/Max\ 8/Packages/maxgo/externals/
-	*/
 }
 
 func buildWindows() {
