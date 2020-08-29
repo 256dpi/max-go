@@ -1,4 +1,1 @@
-max-sdk/
-*.mxo
-*.mxe64
-maxgo
+out/
