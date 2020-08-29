@@ -16,9 +16,6 @@ import (
 	"github.com/kr/pretty"
 )
 
-// TODO: Support hot and cold inlets.
-//  https://cycling74.com/sdk/max-sdk-7.3.3/html/chapter_enhancements.html
-
 /* Types */
 
 // Type describes an inlet or outlet type.
@@ -100,26 +97,26 @@ func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_at
 	}
 }
 
-//export gomaxAssist
-func gomaxAssist(ref uint64, io, i int64) *C.char {
+//export gomaxInfo
+func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
 	// get object
 	obj, ok := objects[ref]
 	if !ok {
-		return nil
+		return nil, false
 	}
 
 	// return label
 	if io == 1 {
 		if int(i) < len(obj.in) {
-			return C.CString(obj.in[i].label)
+			return C.CString(obj.in[i].label), obj.in[i].hot
 		}
 	} else {
 		if int(i) < len(obj.out) {
-			return C.CString(obj.out[i].label)
+			return C.CString(obj.out[i].label), false
 		}
 	}
 
-	return nil
+	return nil, false
 }
 
 //export gomaxFree
@@ -160,13 +157,14 @@ type Object struct {
 type Inlet struct {
 	typ   Type
 	label string
+	hot   bool
 }
 
 // Inlet will declare an inlet. If no inlets are added to an object it will have
 // a default inlet to receive messages.
-func (o *Object) Inlet(typ Type, label string) *Inlet {
+func (o *Object) Inlet(typ Type, label string, hot bool) *Inlet {
 	// prepare
-	inlet := &Inlet{typ: typ, label: label}
+	inlet := &Inlet{typ: typ, label: label, hot: hot}
 
 	// store
 	o.in = append(o.in, inlet)

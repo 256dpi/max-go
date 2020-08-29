@@ -15,8 +15,8 @@ type instance struct {
 func (i *instance) Init(obj *max.Object, args []max.Atom) {
 	max.Pretty("init", i, obj, args)
 
-	i.in1 = obj.Inlet(max.Any, "example inlet 1")
-	i.in2 = obj.Inlet(max.Any, "example inlet 2")
+	i.in1 = obj.Inlet(max.Any, "example inlet 1", true)
+	i.in2 = obj.Inlet(max.Any, "example inlet 2", false)
 
 	i.out1 = obj.Outlet(max.Any, "example outlet 1")
 	i.out2 = obj.Outlet(max.Any, "example outlet 2")

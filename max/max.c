@@ -98,8 +98,21 @@ static void bridge_loadbang(t_bridge *bridge) {
 }
 
 static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf) {
-  const char *str = gomaxAssist(bridge->ref, io, i);
-  strncpy_zero(buf, str, 512);
+  // get info
+  struct gomaxInfo_return ret = gomaxInfo(bridge->ref, io, i);
+
+  // copy label
+  strncpy_zero(buf, ret.r0, 512);
+}
+
+static void bridge_inletinfo(t_bridge *bridge, void *b, long i, char *v) {
+  // get info
+  struct gomaxInfo_return ret = gomaxInfo(bridge->ref, 1, i);
+
+  // set cold if not hot
+  if (!ret.r1) {
+    *v = 1;
+  }
 }
 
 static void bridge_free(t_bridge *bridge) {
@@ -131,6 +144,7 @@ void maxgo_init(const char *name) {
   class_addmethod(class, (method)bridge_dblclick, "dblclick", A_CANT, 0);
   class_addmethod(class, (method)bridge_loadbang, "loadbang", A_CANT, 0);
   class_addmethod(class, (method)bridge_assist, "assist", A_CANT, 0);
+  class_addmethod(class, (method)bridge_inletinfo, "inletinfo", A_CANT, 0);
 
   // register class
   class_register(CLASS_BOX, class);
