@@ -35,8 +35,8 @@ type instance struct {
 }
 
 func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) {
-    // print to Max console
-    maxgo.Pretty("init", args)
+	// print to Max console
+	maxgo.Pretty("init", args)
 
 	// declare inlets
 	i.in1 = obj.Inlet(maxgo.Any, "example inlet 1", true)
@@ -48,8 +48,8 @@ func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) {
 }
 
 func (i *instance) Handle(msg string, inlet int, data []maxgo.Atom) {
-    // print to Max console
-    maxgo.Pretty("handle", msg, inlet, data)
+	// print to Max console
+	maxgo.Pretty("handle", msg, inlet, data)
 
 	// send to first outlet
 	i.out1.Any(msg, data)
@@ -57,7 +57,7 @@ func (i *instance) Handle(msg string, inlet int, data []maxgo.Atom) {
 
 func (i *instance) Free() {
 	// print to Max console
-    maxgo.Pretty("free")
+	maxgo.Pretty("free")
 }
 
 func init() {
