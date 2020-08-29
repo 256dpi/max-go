@@ -160,6 +160,12 @@ void maxgo_init(const char *name) {
 
 /* Threads */
 
-void maxgo_yield(void *p, void *ref) { gomaxYield((unsigned long long)ref); }
+void maxgo_yield(void *p, void *ref) {
+  // yield back
+  gomaxYield((unsigned long long)ref);
+}
 
-void maxgo_defer(unsigned long long ref) { defer_low(NULL, (method)maxgo_yield, (void *)ref, 0, NULL); }
+void maxgo_defer(unsigned long long ref) {
+  // defer function call
+  defer_low(NULL, (method)maxgo_yield, (void *)ref, 0, NULL);
+}
