@@ -108,16 +108,16 @@ func gomaxAssist(ref uint64, io, i int64) *C.char {
 		return nil
 	}
 
-	// return info
+	// return label
 	if io == 1 {
 		if int(i) < len(obj.in) {
-			return C.CString(obj.in[i].info)
+			return C.CString(obj.in[i].label)
 		} else {
 			return nil
 		}
 	} else {
 		if int(i) < len(obj.out) {
-			return C.CString(obj.out[i].info)
+			return C.CString(obj.out[i].label)
 		} else {
 			return nil
 		}
@@ -160,15 +160,15 @@ type Object struct {
 
 // Inlet is a single Max inlet.
 type Inlet struct {
-	typ  Type
-	info string
+	typ   Type
+	label string
 }
 
 // Inlet will declare an inlet. If no inlets are added to an object it will have
 // a default inlet to receive messages.
-func (o *Object) Inlet(typ Type, info string) Inlet {
+func (o *Object) Inlet(typ Type, label string) Inlet {
 	// prepare
-	inlet := Inlet{typ: typ, info: info}
+	inlet := Inlet{typ: typ, label: label}
 
 	// store
 	o.in = append(o.in, inlet)
@@ -181,20 +181,20 @@ func (i Inlet) Type() Type {
 	return i.typ
 }
 
-// Info will return the inlets info.
-func (i Inlet) Info() string {
-	return i.info
+// Label will return the inlets label.
+func (i Inlet) Label() string {
+	return i.label
 }
 
 // Outlet is a single MAx outlet.
 type Outlet struct {
-	typ  Type
-	ptr  unsafe.Pointer
-	info string
+	typ   Type
+	ptr   unsafe.Pointer
+	label string
 }
 
 // Outlet will declare an outlet.
-func (o *Object) Outlet(typ Type, info string) Outlet {
+func (o *Object) Outlet(typ Type, label string) Outlet {
 	// create outlet
 	var ptr unsafe.Pointer
 	switch typ {
@@ -213,7 +213,7 @@ func (o *Object) Outlet(typ Type, info string) Outlet {
 	}
 
 	// prepare
-	outlet := Outlet{typ: typ, ptr: ptr, info: info}
+	outlet := Outlet{typ: typ, ptr: ptr, label: label}
 
 	// store
 	o.out = append(o.out, outlet)
@@ -226,9 +226,9 @@ func (o Outlet) Type() Type {
 	return o.typ
 }
 
-// Info will return the outlets info.
-func (o Outlet) Info() string {
-	return o.info
+// Label will return the outlets label.
+func (o Outlet) Label() string {
+	return o.label
 }
 
 // Any will send any message.
