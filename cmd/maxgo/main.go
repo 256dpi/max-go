@@ -64,17 +64,23 @@ func main() {
 		// log
 		fmt.Println("==> installing external...")
 
+		// get home dir
+		user, err := os.UserHomeDir()
+		check(err)
+
+		// prepare path
+		dir, err := filepath.Abs(filepath.Join(user, "Documents", "Max 8", "Packages", *install, "externals"))
+		check(err)
+
+		// create path
+		check(os.MkdirAll(dir, os.ModePerm))
+
 		// copy external
 		switch runtime.GOOS {
 		case "darwin":
-			user, err := os.UserHomeDir()
-			check(err)
-			dir, err := filepath.Abs(filepath.Join(user, "Documents", "Max 8", "Packages", *install, "externals"))
-			check(err)
-			check(os.MkdirAll(dir, os.ModePerm))
 			check(copy.Copy(filepath.Join(".", "out", *name+".mxo"), filepath.Join(dir, *name+".mxo")))
 		case "windows":
-			panic("not implemented")
+			check(copy.Copy(filepath.Join(".", "out", *name+".mxe64"), filepath.Join(dir, *name+".mxe64")))
 		}
 	}
 
