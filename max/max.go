@@ -157,6 +157,7 @@ type Object struct {
 
 // Inlet is a single Max inlet.
 type Inlet struct {
+	typ Type
 	ptr unsafe.Pointer
 }
 
@@ -167,25 +168,30 @@ type Outlet struct {
 }
 
 // Inlet will declare an inlet.
-func (o *Object) Inlet(typ Type) Inlet {
+func (o Object) Inlet(typ Type) Inlet {
 	switch typ {
 	case Any:
-		return Inlet{ptr: C.inlet_new(o.ptr, nil)}
+		return Inlet{typ: typ, ptr: C.inlet_new(o.ptr, nil)}
 	case Bang:
-		return Inlet{ptr: C.inlet_new(o.ptr, C.CString("bang"))}
+		return Inlet{typ: typ, ptr: C.inlet_new(o.ptr, C.CString("bang"))}
 	case Int:
-		return Inlet{ptr: C.intin(o.ptr, C.short(1))}
+		return Inlet{typ: typ, ptr: C.intin(o.ptr, C.short(1))}
 	case Float:
-		return Inlet{ptr: C.floatin(o.ptr, C.short(1))}
+		return Inlet{typ: typ, ptr: C.floatin(o.ptr, C.short(1))}
 	case List:
-		return Inlet{ptr: C.inlet_new(o.ptr, C.CString("list"))}
+		return Inlet{typ: typ, ptr: C.inlet_new(o.ptr, C.CString("list"))}
 	default:
 		panic("maxgo: invalid inlet type")
 	}
 }
 
+// Type will return the inlets type.
+func (i Inlet) Type() Type {
+	return i.typ
+}
+
 // Outlet will declare an outlet.
-func (o *Object) Outlet(typ Type) Outlet {
+func (o Object) Outlet(typ Type) Outlet {
 	switch typ {
 	case Any:
 		return Outlet{typ: typ, ptr: C.outlet_new(o.ptr, nil)}
@@ -200,6 +206,11 @@ func (o *Object) Outlet(typ Type) Outlet {
 	default:
 		panic("maxgo: invalid outlet type")
 	}
+}
+
+// Type will return the outlets type.
+func (o Outlet) Type() Type {
+	return o.typ
 }
 
 // Any will send any message.
