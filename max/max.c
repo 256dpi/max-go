@@ -23,7 +23,8 @@ static t_class *class = NULL;
 typedef struct {
   t_object obj;
   long inlet;
-  void *proxy;
+  void *proxies[32];
+  int num_proxies;
   unsigned long long ref;
 } t_bridge;
 
@@ -32,12 +33,16 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   t_bridge *bridge = object_alloc(class);
 
   // initialize object
-  bridge->ref = gomaxInit(&bridge->obj, argc, argv);
+  struct gomaxInit_return ret = gomaxInit(&bridge->obj, argc, argv);
 
-  // TODO: A proxy also allocates an inlet...
+  // create proxies
+  bridge->num_proxies = ret.r0;
+  for (int i = 0; i < bridge->num_proxies; i++) {
+    bridge->proxies[i] = proxy_new(&bridge->obj, i + 1, &bridge->inlet);
+  }
 
-  // create proxy
-  bridge->proxy = proxy_new(&bridge->obj, 1, &bridge->inlet);
+  // set reference
+  bridge->ref = ret.r1;
 
   return bridge;
 }
@@ -101,8 +106,10 @@ static void bridge_free(t_bridge *bridge) {
   // free object
   gomaxFree(bridge->ref);
 
-  // free proxy
-  object_free(bridge->proxy);
+  // free proxies
+  for (int i = 0; i < bridge->num_proxies; i++) {
+    object_free(bridge->proxies[i]);
+  }
 }
 
 void maxgo_init(const char *name) {

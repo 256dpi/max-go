@@ -6,20 +6,24 @@ import (
 )
 
 type instance struct {
-	out max.Outlet
+	out1 max.Outlet
+	out2 max.Outlet
 }
 
 func (i *instance) Init(obj *max.Object, args []max.Atom) {
 	max.Pretty("init", i, obj, args)
 
-	obj.Inlet(max.Any, "example inlet")
-	i.out = obj.Outlet(max.Any, "example outlet")
+	obj.Inlet(max.Any, "example inlet 1")
+	obj.Inlet(max.Any, "example inlet 2")
+
+	i.out1 = obj.Outlet(max.Any, "example outlet 1")
+	i.out2 = obj.Outlet(max.Any, "example outlet 2")
 }
 
 func (i *instance) Handle(msg string, inlet int, data []max.Atom) {
 	max.Pretty("handle", i, msg, inlet, data)
 
-	i.out.Any(msg, data)
+	i.out1.Any(msg, data)
 }
 
 func (i *instance) Free() {

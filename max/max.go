@@ -67,7 +67,7 @@ var handlerCallback func(uint64, string, int, []Atom)
 var freeCallback func(uint64)
 
 //export gomaxInit
-func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) uint64 {
+func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
@@ -80,7 +80,13 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) uint64 {
 	// store object
 	objects[ref] = obj
 
-	return ref
+	// determine required proxies
+	var proxies int
+	if len(obj.in) > 0 {
+		proxies = len(obj.in) - 1
+	}
+
+	return proxies, ref
 }
 
 //export gomaxMessage
@@ -155,31 +161,14 @@ type Object struct {
 // Inlet is a single Max inlet.
 type Inlet struct {
 	typ  Type
-	ptr  unsafe.Pointer
 	info string
 }
 
-// Inlet will declare an inlet.
+// Inlet will declare an inlet. If no inlets are added to an object it will have
+// a default inlet to receive messages.
 func (o *Object) Inlet(typ Type, info string) Inlet {
-	// create inlet
-	var ptr unsafe.Pointer
-	switch typ {
-	case Any:
-		ptr = C.inlet_new(o.ptr, nil)
-	case Bang:
-		ptr = C.inlet_new(o.ptr, C.CString("bang"))
-	case Int:
-		ptr = C.intin(o.ptr, C.short(1))
-	case Float:
-		ptr = C.floatin(o.ptr, C.short(1))
-	case List:
-		ptr = C.inlet_new(o.ptr, C.CString("list"))
-	default:
-		panic("maxgo: invalid inlet type")
-	}
-
 	// prepare
-	inlet := Inlet{typ: typ, ptr: ptr, info: info}
+	inlet := Inlet{typ: typ, info: info}
 
 	// store
 	o.in = append(o.in, inlet)
@@ -190,6 +179,11 @@ func (o *Object) Inlet(typ Type, info string) Inlet {
 // Type will return the inlets type.
 func (i Inlet) Type() Type {
 	return i.typ
+}
+
+// Info will return the inlets info.
+func (i Inlet) Info() string {
+	return i.info
 }
 
 // Outlet is a single MAx outlet.
@@ -230,6 +224,11 @@ func (o *Object) Outlet(typ Type, info string) Outlet {
 // Type will return the outlets type.
 func (o Outlet) Type() Type {
 	return o.typ
+}
+
+// Info will return the outlets info.
+func (o Outlet) Info() string {
+	return o.info
 }
 
 // Any will send any message.
