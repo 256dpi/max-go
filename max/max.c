@@ -157,3 +157,9 @@ void maxgo_init(const char *name) {
   // register class
   class_register(CLASS_BOX, class);
 }
+
+/* Threads */
+
+void maxgo_yield(void *p, void *ref) { gomaxYield((unsigned long long)ref); }
+
+void maxgo_defer(unsigned long long ref) { defer_low(NULL, (method)maxgo_yield, (void *)ref, 0, NULL); }

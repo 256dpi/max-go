@@ -11,6 +11,7 @@ import "C"
 import (
 	"fmt"
 	"reflect"
+	"sync"
 	"sync/atomic"
 	"unsafe"
 
@@ -290,15 +291,44 @@ func (o *Outlet) List(atoms []Atom) {
 
 /* Threads */
 
-// TODO: Add critical regions management.
+var queue = map[uint64]func(){}
+var queueMutex sync.Mutex
 
-// func EnterCritical() {
-// 	C.critical_enter(0)
-// }
-//
-// func ExitCritical() {
-// 	C.critical_exit(0)
-// }
+// IsMainThread will return if the Max main thead is executing.
+func IsMainThread() bool {
+	return C.systhread_ismainthread() == 1
+}
+
+// IsTimerThread will return if the Max timer thread is executing.
+func IsTimerThread() bool {
+	return C.systhread_istimerthread() == 1
+}
+
+//export gomaxYield
+func gomaxYield(ref uint64) {
+	// get function
+	queueMutex.Lock()
+	fn := queue[ref]
+	delete(queue, ref)
+	queueMutex.Unlock()
+
+	// execute function
+	fn()
+}
+
+// Defer will run the provided function on the Max main thread.
+func Defer(fn func()) {
+	// get reference
+	ref := atomic.AddUint64(&counter, 1)
+
+	// store function
+	queueMutex.Lock()
+	queue[ref] = fn
+	queueMutex.Unlock()
+
+	// defer call
+	C.maxgo_defer(C.ulonglong(ref))
+}
 
 /* Atoms */
 

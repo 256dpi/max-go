@@ -31,8 +31,19 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) {
 
 	// send a bang for every tick
 	go func() {
+		var j int
 		for range i.tick.C {
-			i.out2.Bang()
+			max.Pretty("tick", max.IsMainThread(), max.IsTimerThread())
+
+			// bang immediately or defer
+			if j++; j%2 == 0 {
+				i.out2.Bang()
+			} else {
+				max.Defer(func() {
+					max.Pretty("defer", max.IsMainThread(), max.IsTimerThread())
+					i.out2.Bang()
+				})
+			}
 		}
 	}()
 }

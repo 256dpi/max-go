@@ -13,4 +13,6 @@ void maxgo_alert(const char *str);
 
 void maxgo_init(const char *name);
 
+void maxgo_defer(unsigned long long ref);
+
 #endif
