@@ -21,6 +21,18 @@ import (
 
 /* Types */
 
+// Type describes an inlet or outlet type.
+type Type int
+
+// The available inlet and outlet types.
+const (
+	Any Type = iota
+	Bang
+	Int
+	Float
+	List
+)
+
 // Atom is a Max atom of type int64, float64 or string.
 type Atom = interface{}
 
@@ -51,7 +63,7 @@ func Pretty(a ...interface{}) {
 var classes = map[string]Class{}
 var initializers = map[string]func(Object, []Atom) uintptr{}
 var handlers = map[string]func(uintptr, string, int, []Atom){}
-var assists = map[string]func(uintptr, int64, int64)string{}
+var assists = map[string]func(uintptr, int64, int64) string{}
 var finalizers = map[string]func(uintptr){}
 
 //export gomaxGet
@@ -62,7 +74,7 @@ func gomaxGet(name *C.char) *C.t_class {
 //export gomaxInit
 func gomaxInit(name *C.char, obj unsafe.Pointer, argc int64, argv *C.t_atom) uintptr {
 	atoms := decodeAtoms(argc, argv)
-	return initializers[C.GoString(name)](Object{obj}, atoms)
+	return initializers[C.GoString(name)](Object{ptr: obj}, atoms)
 }
 
 //export gomaxMessage
@@ -153,49 +165,40 @@ type Outlet struct {
 	ptr unsafe.Pointer
 }
 
-// AnyIn will create a generic inlet.
-func (o *Object) AnyIn() Inlet {
-	return Inlet{C.inlet_new(o.ptr, nil)}
+// Inlet will declare an inlet.
+func (o *Object) Inlet(typ Type) Inlet {
+	switch typ {
+	case Any:
+		return Inlet{ptr: C.inlet_new(o.ptr, nil)}
+	case Bang:
+		return Inlet{ptr: C.inlet_new(o.ptr, C.CString("bang"))}
+	case Int:
+		return Inlet{ptr: C.intin(o.ptr, C.short(1))}
+	case Float:
+		return Inlet{ptr: C.floatin(o.ptr, C.short(1))}
+	case List:
+		return Inlet{ptr: C.inlet_new(o.ptr, C.CString("list"))}
+	default:
+		panic("invalid inlet type")
+	}
 }
 
-// BangIn will create a bang inlet.
-func (o *Object) BangIn() Inlet {
-	return Inlet{C.inlet_new(o.ptr, C.CString("bang"))}
-}
-
-// IntIn will create an int inlet.
-func (o *Object) IntIn() Inlet {
-	return Inlet{C.intin(o.ptr, C.short(1))}
-}
-
-// FloatIn will create a float inlet.
-func (o *Object) FloatIn() Inlet {
-	return Inlet{C.floatin(o.ptr, C.short(1))}
-}
-
-// AnyOut will create a generic outlet.
-func (o *Object) AnyOut() Outlet {
-	return Outlet{C.outlet_new(o.ptr, nil)}
-}
-
-// BangOut will create a bang outlet.
-func (o *Object) BangOut() Outlet {
-	return Outlet{C.bangout(o.ptr)}
-}
-
-// IntOut will create an int outlet.
-func (o *Object) IntOut() Outlet {
-	return Outlet{C.intout(o.ptr)}
-}
-
-// FloatOut will create a float outlet.
-func (o *Object) FloatOut() Outlet {
-	return Outlet{C.floatout(o.ptr)}
-}
-
-// ListOut will create a list outlet.
-func (o *Object) ListOut() Outlet {
-	return Outlet{C.listout(o.ptr)}
+// Outlet will declare an outlet.
+func (o *Object) Outlet(typ Type) Outlet {
+	switch typ {
+	case Any:
+		return Outlet{ptr: C.outlet_new(o.ptr, nil)}
+	case Bang:
+		return Outlet{ptr: C.bangout(o.ptr)}
+	case Int:
+		return Outlet{ptr: C.intout(o.ptr)}
+	case Float:
+		return Outlet{ptr: C.floatout(o.ptr)}
+	case List:
+		return Outlet{ptr: C.listout(o.ptr)}
+	default:
+		panic("invalid outlet type")
+	}
 }
 
 // Bang will send a bang.

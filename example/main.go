@@ -16,8 +16,8 @@ type instance struct {
 func (i *instance) Init(obj max.Object, args []max.Atom) {
 	max.Pretty("init", i, obj, args)
 
-	obj.AnyIn()
-	i.out = obj.AnyOut()
+	obj.Inlet(max.Any)
+	i.out = obj.Outlet(max.Any)
 }
 
 func (i *instance) Describe(inlet bool, num int) string {
