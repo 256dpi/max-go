@@ -274,8 +274,6 @@ func (o *Outlet) List(atoms []Atom) {
 	}
 }
 
-// TODO: Support proxies?
-
 /* Threads */
 
 // TODO: Add critical regions management.
