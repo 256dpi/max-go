@@ -18,4 +18,4 @@ install:
 	go install ./cmd/maxgo
 
 build: install
-	cd example; maxgo -cross -name maxgo -install maxgo
+	cd example; maxgo -name maxgo -cross -install maxgo

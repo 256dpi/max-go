@@ -79,5 +79,5 @@ maxgo -name example
 You can also cross compile (macOS only) and install the external:
 
 ```
-maxgo -cross -name example -install example
+maxgo -name example -cross -install example
 ```
