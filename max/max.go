@@ -130,7 +130,7 @@ func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_at
 
 	// TODO: Check types?
 
-	// call handle if available
+	// call handler if available
 	if handlerCallback != nil {
 		handlerCallback(obj, C.GoString(msg), int(inlet), atoms)
 	}
@@ -362,6 +362,11 @@ func Defer(fn func()) {
 /* Atoms */
 
 func decodeAtoms(argc int64, argv *C.t_atom) []Atom {
+	// check empty
+	if argc == 0 {
+		return nil
+	}
+
 	// cast to slice
 	var list []C.t_atom
 	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&list))
@@ -370,19 +375,19 @@ func decodeAtoms(argc int64, argv *C.t_atom) []Atom {
 	sliceHeader.Data = uintptr(unsafe.Pointer(argv))
 
 	// allocate result
-	atoms := make([]interface{}, 0, len(list))
+	atoms := make([]interface{}, len(list))
 
 	// add atoms
-	for _, item := range list {
+	for i, item := range list {
 		switch item.a_type {
 		case C.A_LONG:
-			atoms = append(atoms, int64(C.atom_getlong(&item)))
+			atoms[i] = int64(C.atom_getlong(&item))
 		case C.A_FLOAT:
-			atoms = append(atoms, float64(C.atom_getfloat(&item)))
+			atoms[i] = float64(C.atom_getfloat(&item))
 		case C.A_SYM:
-			atoms = append(atoms, C.GoString(C.atom_getsym(&item).s_name))
+			atoms[i] = C.GoString(C.atom_getsym(&item).s_name)
 		default:
-			atoms = append(atoms, nil)
+			atoms[i] = nil
 		}
 	}
 
