@@ -23,8 +23,8 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) {
 	i.in2 = obj.Inlet(max.Float, "example inlet 2", false)
 
 	// declare outlets
-	i.out2 = obj.Outlet(max.Bang, "example outlet 2")
 	i.out1 = obj.Outlet(max.Any, "example outlet 1")
+	i.out2 = obj.Outlet(max.Bang, "example outlet 2")
 
 	// create timer
 	i.tick = time.NewTicker(time.Second)

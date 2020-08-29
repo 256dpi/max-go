@@ -76,16 +76,35 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	// prepare object
 	obj := &Object{ref: ref, ptr: ptr}
 
-	// call init callback
-	initCallback(obj, atoms)
-
 	// store object
 	objects[ref] = obj
+
+	// call init callback
+	initCallback(obj, atoms)
 
 	// determine required proxies
 	var proxies int
 	if len(obj.in) > 0 {
 		proxies = len(obj.in) - 1
+	}
+
+	// create outlets in reverse order
+	for i := len(obj.out) - 1; i >= 0; i-- {
+		outlet := obj.out[i]
+		switch outlet.typ {
+		case Any:
+			outlet.ptr = C.outlet_new(obj.ptr, nil)
+		case Bang:
+			outlet.ptr = C.bangout(obj.ptr)
+		case Int:
+			outlet.ptr = C.intout(obj.ptr)
+		case Float:
+			outlet.ptr = C.floatout(obj.ptr)
+		case List:
+			outlet.ptr = C.listout(obj.ptr)
+		default:
+			panic("maxgo: invalid outlet type")
+		}
 	}
 
 	return proxies, ref
@@ -211,25 +230,8 @@ type Outlet struct {
 
 // Outlet will declare an outlet.
 func (o *Object) Outlet(typ Type, label string) *Outlet {
-	// create outlet
-	var ptr unsafe.Pointer
-	switch typ {
-	case Any:
-		ptr = C.outlet_new(o.ptr, nil)
-	case Bang:
-		ptr = C.bangout(o.ptr)
-	case Int:
-		ptr = C.intout(o.ptr)
-	case Float:
-		ptr = C.floatout(o.ptr)
-	case List:
-		ptr = C.listout(o.ptr)
-	default:
-		panic("maxgo: invalid outlet type")
-	}
-
 	// prepare
-	outlet := &Outlet{typ: typ, ptr: ptr, label: label}
+	outlet := &Outlet{typ: typ, label: label}
 
 	// store
 	o.out = append(o.out, outlet)
