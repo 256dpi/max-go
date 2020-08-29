@@ -2,6 +2,7 @@ package maxgo
 
 import (
 	"reflect"
+	"sync"
 
 	"github.com/256dpi/maxgo/max"
 )
@@ -16,7 +17,12 @@ type Instance interface {
 // Init will initialize the Max class using the provided instance. This function
 // must be called from the main packages init() function as the main() function
 // is never called by a Max external.
+//
+// The callbacks on the instance are never called from in parallel.
 func Init(name string, prototype Instance) {
+	// create mutex
+	var mutex sync.Mutex
+
 	// create instance map
 	instances := map[*max.Object]Instance{}
 
@@ -24,16 +30,39 @@ func Init(name string, prototype Instance) {
 	typ := reflect.TypeOf(prototype).Elem()
 
 	// initialize max class
-	max.Init(name, func(o *max.Object, args []max.Atom) {
+	max.Init(name, func(obj *max.Object, args []max.Atom) {
+		// allocate instance
 		instance := reflect.New(typ).Interface().(Instance)
-		instance.Init(o, args)
-		instances[o] = instance
-	}, func(o *max.Object, msg string, inlet int, atoms []max.Atom) {
-		instance := instances[o]
+
+		// call init
+		obj.Lock()
+		instance.Init(obj, args)
+		obj.Unlock()
+
+		// store instance
+		mutex.Lock()
+		instances[obj] = instance
+		mutex.Unlock()
+	}, func(obj *max.Object, msg string, inlet int, atoms []max.Atom) {
+		// get instance
+		mutex.Lock()
+		instance := instances[obj]
+		mutex.Unlock()
+
+		// handle message
+		obj.Lock()
 		instance.Handle(msg, inlet, atoms)
-	}, func(o *max.Object) {
-		instance := instances[o]
+		obj.Unlock()
+	}, func(obj *max.Object) {
+		// get and delete instance
+		mutex.Lock()
+		instance := instances[obj]
+		delete(instances, obj)
+		mutex.Unlock()
+
+		// call free
+		obj.Lock()
 		instance.Free()
-		delete(instances, o)
+		obj.Unlock()
 	})
 }

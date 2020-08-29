@@ -60,11 +60,13 @@ func Pretty(a ...interface{}) {
 /* Classes */
 
 var counter uint64
-var objects = map[uint64]*Object{}
 
 var initCallback func(*Object, []Atom)
 var handlerCallback func(*Object, string, int, []Atom)
 var freeCallback func(*Object)
+
+var objects = map[uint64]*Object{}
+var objectsMutex sync.Mutex
 
 //export gomaxInit
 func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
@@ -78,7 +80,9 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	obj := &Object{ref: ref, ptr: ptr}
 
 	// store object
+	objectsMutex.Lock()
 	objects[ref] = obj
+	objectsMutex.Unlock()
 
 	// call init callback
 	initCallback(obj, atoms)
@@ -114,7 +118,9 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 //export gomaxMessage
 func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
 	// get object
+	objectsMutex.Lock()
 	obj, ok := objects[ref]
+	objectsMutex.Unlock()
 	if !ok {
 		return
 	}
@@ -133,7 +139,9 @@ func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_at
 //export gomaxInfo
 func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
 	// get object
+	objectsMutex.Lock()
 	obj, ok := objects[ref]
+	objectsMutex.Unlock()
 	if !ok {
 		return nil, false
 	}
@@ -154,8 +162,11 @@ func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
 
 //export gomaxFree
 func gomaxFree(ref uint64) {
-	// get object
+	// get and delete object
+	objectsMutex.Lock()
 	obj, ok := objects[ref]
+	delete(objects, ref)
+	objectsMutex.Unlock()
 	if !ok {
 		return
 	}
@@ -164,16 +175,30 @@ func gomaxFree(ref uint64) {
 	if freeCallback != nil {
 		freeCallback(obj)
 	}
-
-	// delete object
-	delete(objects, ref)
 }
+
+var initMutex sync.Mutex
+var initDone bool
 
 // Init will initialize the Max class with the specified name using the provided
 // callbacks to initialize and free objects. This function must be called from
 // the main packages init() function as the main() function is never called by a
 // Max external.
+//
+// The provided callbacks are called to initialize and object, handle messages
+// and free the object when it is not used anymore. The callbacks are usually
+// called on the Max main thread. However, the handler may be called from and
+// unknown thread in parallel to the other callbacks.
 func Init(name string, init func(*Object, []Atom), handler func(*Object, string, int, []Atom), free func(*Object)) {
+	// ensure mutex
+	initMutex.Lock()
+	defer initMutex.Unlock()
+
+	// check flag
+	if initDone {
+		panic("maxgo: already initialized")
+	}
+
 	// set callbacks
 	initCallback = init
 	handlerCallback = handler
@@ -181,12 +206,16 @@ func Init(name string, init func(*Object, []Atom), handler func(*Object, string,
 
 	// initialize
 	C.maxgo_init(C.CString(name))
+
+	// set flag
+	initDone = true
 }
 
 /* Objects */
 
 // Object is single Max object.
 type Object struct {
+	sync.Mutex
 	ref uint64
 	ptr unsafe.Pointer
 	in  []*Inlet
