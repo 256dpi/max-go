@@ -60,81 +60,53 @@ func Pretty(a ...interface{}) {
 
 /* Classes */
 
-var classes = map[string]Class{}
-var initializers = map[string]func(Object, []Atom) uintptr{}
-var handlers = map[string]func(uintptr, string, int, []Atom){}
-var assists = map[string]func(uintptr, int64, int64) string{}
-var finalizers = map[string]func(uintptr){}
-
-//export gomaxGet
-func gomaxGet(name *C.char) *C.t_class {
-	return (*C.t_class)(classes[C.GoString(name)].ptr)
-}
+var initCallback func(Object, []Atom) uintptr
+var handlerCallback func(uintptr, string, int, []Atom)
+var assistCallback func(uintptr, int64, int64) string
+var freeCallback func(uintptr)
 
 //export gomaxInit
-func gomaxInit(name *C.char, obj unsafe.Pointer, argc int64, argv *C.t_atom) uintptr {
+func gomaxInit(obj unsafe.Pointer, argc int64, argv *C.t_atom) uintptr {
 	atoms := decodeAtoms(argc, argv)
-	return initializers[C.GoString(name)](Object{ptr: obj}, atoms)
+	if initCallback != nil {
+		return initCallback(Object{ptr: obj}, atoms)
+	}
+	return 0
 }
 
 //export gomaxMessage
-func gomaxMessage(name *C.char, ptr uintptr, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
+func gomaxMessage(ptr uintptr, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
 	atoms := decodeAtoms(argc, argv)
-	handler := handlers[C.GoString(name)]
-	if handler != nil {
-		handler(ptr, C.GoString(msg), int(inlet), atoms)
+	if handlerCallback != nil {
+		handlerCallback(ptr, C.GoString(msg), int(inlet), atoms)
 	}
 }
 
 //export gomaxAssist
-func gomaxAssist(name *C.char, ptr uintptr, io, i int64) *C.char {
-	assist := assists[C.GoString(name)]
-	if assist != nil {
-		return C.CString(assist(ptr, io, i))
+func gomaxAssist(ptr uintptr, io, i int64) *C.char {
+	if assistCallback != nil {
+		return C.CString(assistCallback(ptr, io, i))
 	}
 	return C.CString("")
 }
 
 //export gomaxFree
-func gomaxFree(name *C.char, ptr uintptr) {
-	free := finalizers[C.GoString(name)]
-	if free != nil {
-		free(ptr)
+func gomaxFree(ptr uintptr) {
+	if freeCallback != nil {
+		freeCallback(ptr)
 	}
 }
 
-// Class is a Max object class.
-type Class struct {
-	ptr unsafe.Pointer
-	reg bool
-}
+// Init will initialize the Max class with the specified name using the provided callbacks to initialize and free objects.
+func Init(name string, init func(Object, []Atom) uintptr, handler func(uintptr, string, int, []Atom), assist func(uintptr, int64, int64) string, free func(uintptr)) {
+	// set callbacks
+	initCallback = init
+	handlerCallback = handler
+	assistCallback = assist
+	freeCallback = free
 
-// NewClass will create a new class with the specified name using the provided callbacks to initialize and free objects.
-func NewClass(name string, init func(Object, []Atom) uintptr, handler func(uintptr, string, int, []Atom), assist func(uintptr, int64, int64) string, free func(uintptr)) Class {
-	// register methods
-	initializers[name] = init
-	handlers[name] = handler
-	assists[name] = assist
-	finalizers[name] = free
-
-	// create class
-	class := Class{ptr: unsafe.Pointer(C.maxgo_class_new(C.CString(name)))}
-
-	// register class
-	classes[name] = class
-
-	return class
-}
-
-// Register will register the class if not already registered.
-func (c Class) Register() {
-	// check
-	if c.reg {
-		panic("maxgo: class already registered")
-	}
-
-	// register class
-	C.class_register(C.CLASS_BOX, (*C.t_class)(c.ptr))
+	// initialize
+	C.maxgo_init(C.CString(name))
 }
 
 /* Objects */

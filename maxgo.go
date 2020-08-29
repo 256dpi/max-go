@@ -16,16 +16,16 @@ type Instance interface {
 	Free()
 }
 
-// Register will register a new class using the specified prototype instance.
-func Register(name string, prototype Instance) {
+// Init will initialize the Max class using the provided instance.
+func Init(name string, prototype Instance) {
 	// create instance map
 	instances := map[uintptr]Instance{}
 
 	// get type
 	typ := reflect.TypeOf(prototype).Elem()
 
-	// create class
-	class := max.NewClass(name, func(o max.Object, args []max.Atom) uintptr {
+	// initialize max class
+	max.Init(name, func(o max.Object, args []max.Atom) uintptr {
 		// create instance
 		value := reflect.New(typ)
 		instance := value.Interface().(Instance)
@@ -58,9 +58,4 @@ func Register(name string, prototype Instance) {
 
 		delete(instances, p)
 	})
-
-	// TODO: Add methods?
-
-	// register class
-	class.Register()
 }

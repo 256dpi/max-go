@@ -46,5 +46,5 @@ func ext_main(uintptr) {
 }
 
 func main() {
-	maxgo.Register("maxgo", &instance{})
+	maxgo.Init("maxgo", &instance{})
 }

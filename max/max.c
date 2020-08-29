@@ -12,28 +12,25 @@ void maxgo_alert(const char *str) { ouchstring(str); }
 
 /* Classes */
 
+static t_class *class = NULL;
+
 typedef struct {
   t_object obj;
   t_symbol *name;
-  t_class *class;
   long inlet;
   void *proxy;
   GoUintptr ref;
 } t_bridge;
 
 static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
-  // get class
-  t_class *class = gomaxGet(name->s_name);
-
   // allocate bridge
   t_bridge *bridge = object_alloc(class);
 
   // set info
   bridge->name = name;
-  bridge->class = class;
 
   // initialize object
-  bridge->ref = gomaxInit(name->s_name, &bridge->obj, argc, argv);
+  bridge->ref = gomaxInit(&bridge->obj, argc, argv);
 
   // TODO: A proxy also allocates an inlet...
 
@@ -48,7 +45,7 @@ static void bridge_bang(t_bridge *bridge) {
   long inlet = proxy_getinlet(&bridge->obj);
 
   // dispatch message
-  gomaxMessage(bridge->name->s_name, bridge->ref, "bang", inlet, 0, NULL);
+  gomaxMessage(bridge->ref, "bang", inlet, 0, NULL);
 }
 
 static void bridge_int(t_bridge *bridge, long n) {
@@ -60,7 +57,7 @@ static void bridge_int(t_bridge *bridge, long n) {
   atom_setlong(args, n);
 
   // dispatch message
-  gomaxMessage(bridge->name->s_name, bridge->ref, "int", inlet, 1, args);
+  gomaxMessage(bridge->ref, "int", inlet, 1, args);
 }
 
 static void bridge_float(t_bridge *bridge, double n) {
@@ -72,41 +69,41 @@ static void bridge_float(t_bridge *bridge, double n) {
   atom_setfloat(args, n);
 
   // dispatch message
-  gomaxMessage(bridge->name->s_name, bridge->ref, "float", inlet, 1, args);
+  gomaxMessage(bridge->ref, "float", inlet, 1, args);
 }
 
-static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc,
-                         t_atom *argv) {
+static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *argv) {
   // get inlet
   long inlet = proxy_getinlet(&bridge->obj);
 
   // dispatch message
-  gomaxMessage(bridge->name->s_name, bridge->ref, msg->s_name, inlet, argc,
-               argv);
+  gomaxMessage(bridge->ref, msg->s_name, inlet, argc, argv);
 }
 
-static void bridge_dblclick(t_bridge *bridge) {
-  gomaxMessage(bridge->name->s_name, bridge->ref, "dblclick", 0, 0, NULL);
-}
+static void bridge_dblclick(t_bridge *bridge) { gomaxMessage(bridge->ref, "dblclick", 0, 0, NULL); }
 
-static void bridge_assist(t_bridge *bridge, void *b, long io, long i,
-                          char *buf) {
-  const char *str = gomaxAssist(bridge->name->s_name, bridge->ref, io, i);
+static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf) {
+  const char *str = gomaxAssist(bridge->ref, io, i);
   strncpy_zero(buf, str, 512);
 }
 
 static void bridge_free(t_bridge *bridge) {
   // free object
-  gomaxFree(bridge->name->s_name, bridge->ref);
+  gomaxFree(bridge->ref);
 
   // free proxy
   object_free(bridge->proxy);
 }
 
-t_class *maxgo_class_new(const char *name) {
+void maxgo_init(const char *name) {
+  // check class
+  if (class != NULL) {
+    error("maxgo_init: has already been called");
+    return;
+  }
+
   // create class
-  t_class *class = class_new(name, (method)bridge_new, (method)bridge_free,
-                             (long)sizeof(t_bridge), 0L, A_GIMME, 0);
+  class = class_new(name, (method)bridge_new, (method)bridge_free, (long)sizeof(t_bridge), 0L, A_GIMME, 0);
 
   // add generic methods
   class_addmethod(class, (method)bridge_bang, "bang", 0);
@@ -117,5 +114,6 @@ t_class *maxgo_class_new(const char *name) {
   class_addmethod(class, (method)bridge_dblclick, "dblclick", 0);
   class_addmethod(class, (method)bridge_assist, "assist", A_CANT, 0);
 
-  return class;
+  // register class
+  class_register(CLASS_BOX, class);
 }

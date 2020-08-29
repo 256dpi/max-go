@@ -11,6 +11,6 @@ void maxgo_log(const char *str);
 void maxgo_error(const char *str);
 void maxgo_alert(const char *str);
 
-t_class *maxgo_class_new(const char *name);
+void maxgo_init(const char *name);
 
 #endif

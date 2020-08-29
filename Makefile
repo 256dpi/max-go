@@ -5,4 +5,4 @@ fmt:
 	go fmt .
 	go vet .
 	golint .
-	clang-format -i max/*.c max/*.h
+	clang-format  -style "{BasedOnStyle: Google, ColumnLimit: 120}" -i max/*.c max/*.h
