@@ -44,14 +44,14 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) {
 		go func() {
 			var j int
 			for range i.tick.C {
-				max.Pretty("tick", max.IsMainThread(), max.IsTimerThread())
+				max.Pretty("tick", max.IsMainThread())
 
 				// bang immediately or defer
 				if j++; j%2 == 0 {
 					i.out2.Bang()
 				} else {
 					max.Defer(func() {
-						max.Pretty("defer", max.IsMainThread(), max.IsTimerThread())
+						max.Pretty("defer", max.IsMainThread())
 						i.out2.Bang()
 					})
 				}

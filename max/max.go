@@ -328,11 +328,6 @@ func IsMainThread() bool {
 	return C.systhread_ismainthread() == 1
 }
 
-// IsTimerThread will return if the Max timer thread is executing.
-func IsTimerThread() bool {
-	return C.systhread_istimerthread() == 1
-}
-
 //export gomaxYield
 func gomaxYield(ref uint64) {
 	// get function
