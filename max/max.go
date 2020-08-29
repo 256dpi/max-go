@@ -180,7 +180,7 @@ func (o *Object) Inlet(typ Type) Inlet {
 	case List:
 		return Inlet{ptr: C.inlet_new(o.ptr, C.CString("list"))}
 	default:
-		panic("invalid inlet type")
+		panic("maxgo: invalid inlet type")
 	}
 }
 
@@ -198,7 +198,7 @@ func (o *Object) Outlet(typ Type) Outlet {
 	case List:
 		return Outlet{typ: typ, ptr: C.listout(o.ptr)}
 	default:
-		panic("invalid outlet type")
+		panic("maxgo: invalid outlet type")
 	}
 }
 
