@@ -76,9 +76,15 @@ static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *arg
   gomaxMessage(bridge->ref, msg->s_name, inlet, argc, argv);
 }
 
-static void bridge_dblclick(t_bridge *bridge) { gomaxMessage(bridge->ref, "dblclick", 0, 0, NULL); }
+static void bridge_dblclick(t_bridge *bridge) {
+  // dispatch message
+  gomaxMessage(bridge->ref, "dblclick", 0, 0, NULL);
+}
 
-static void bridge_loadbang(t_bridge *bridge) { gomaxMessage(bridge->ref, "loadbang", 0, 0, NULL); }
+static void bridge_loadbang(t_bridge *bridge) {
+  // dispatch message
+  gomaxMessage(bridge->ref, "loadbang", 0, 0, NULL);
+}
 
 static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf) {
   const char *str = gomaxAssist(bridge->ref, io, i);
