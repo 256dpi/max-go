@@ -2,6 +2,7 @@ package maxgo
 
 import (
 	"reflect"
+	"sync/atomic"
 
 	"github.com/256dpi/maxgo/max"
 )
@@ -18,44 +19,49 @@ type Instance interface {
 
 // Init will initialize the Max class using the provided instance.
 func Init(name string, prototype Instance) {
+	// prepare id counter
+	var id uint64
+
 	// create instance map
-	instances := map[uintptr]Instance{}
+	instances := map[uint64]Instance{}
 
 	// get type
 	typ := reflect.TypeOf(prototype).Elem()
 
 	// initialize max class
-	max.Init(name, func(o max.Object, args []max.Atom) uintptr {
+	max.Init(name, func(o max.Object, args []max.Atom) uint64 {
+		// get reference
+		ref := atomic.AddUint64(&id, 1)
+
 		// create instance
-		value := reflect.New(typ)
-		instance := value.Interface().(Instance)
+		instance := reflect.New(typ).Interface().(Instance)
 
 		// initialize
 		instance.Init(o, args)
 
 		// store instance
-		instances[value.Pointer()] = instance
+		instances[ref] = instance
 
-		return value.Pointer()
-	}, func(p uintptr, msg string, inlet int, atoms []max.Atom) {
+		return ref
+	}, func(ref uint64, msg string, inlet int, atoms []max.Atom) {
 		// lookup instance
-		instance := instances[p]
+		instance := instances[ref]
 
 		// handle message
 		instance.Handle(msg, inlet, atoms)
-	}, func(p uintptr, io int64, i int64) string {
+	}, func(ref uint64, io int64, i int64) string {
 		// lookup instance
-		instance := instances[p]
+		instance := instances[ref]
 
 		// describe port
 		return instance.Describe(io == 1, int(i))
-	}, func(p uintptr) {
+	}, func(ref uint64) {
 		// lookup instance
-		instance := instances[p]
+		instance := instances[ref]
 
 		// free instance
 		instance.Free()
 
-		delete(instances, p)
+		delete(instances, ref)
 	})
 }

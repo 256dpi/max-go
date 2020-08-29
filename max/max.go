@@ -60,13 +60,13 @@ func Pretty(a ...interface{}) {
 
 /* Classes */
 
-var initCallback func(Object, []Atom) uintptr
-var handlerCallback func(uintptr, string, int, []Atom)
-var assistCallback func(uintptr, int64, int64) string
-var freeCallback func(uintptr)
+var initCallback func(Object, []Atom) uint64
+var handlerCallback func(uint64, string, int, []Atom)
+var assistCallback func(uint64, int64, int64) string
+var freeCallback func(uint64)
 
 //export gomaxInit
-func gomaxInit(obj unsafe.Pointer, argc int64, argv *C.t_atom) uintptr {
+func gomaxInit(obj unsafe.Pointer, argc int64, argv *C.t_atom) uint64 {
 	atoms := decodeAtoms(argc, argv)
 	if initCallback != nil {
 		return initCallback(Object{ptr: obj}, atoms)
@@ -75,30 +75,30 @@ func gomaxInit(obj unsafe.Pointer, argc int64, argv *C.t_atom) uintptr {
 }
 
 //export gomaxMessage
-func gomaxMessage(ptr uintptr, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
+func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
 	atoms := decodeAtoms(argc, argv)
 	if handlerCallback != nil {
-		handlerCallback(ptr, C.GoString(msg), int(inlet), atoms)
+		handlerCallback(ref, C.GoString(msg), int(inlet), atoms)
 	}
 }
 
 //export gomaxAssist
-func gomaxAssist(ptr uintptr, io, i int64) *C.char {
+func gomaxAssist(ref uint64, io, i int64) *C.char {
 	if assistCallback != nil {
-		return C.CString(assistCallback(ptr, io, i))
+		return C.CString(assistCallback(ref, io, i))
 	}
 	return C.CString("")
 }
 
 //export gomaxFree
-func gomaxFree(ptr uintptr) {
+func gomaxFree(ref uint64) {
 	if freeCallback != nil {
-		freeCallback(ptr)
+		freeCallback(ref)
 	}
 }
 
 // Init will initialize the Max class with the specified name using the provided callbacks to initialize and free objects.
-func Init(name string, init func(Object, []Atom) uintptr, handler func(uintptr, string, int, []Atom), assist func(uintptr, int64, int64) string, free func(uintptr)) {
+func Init(name string, init func(Object, []Atom) uint64, handler func(uint64, string, int, []Atom), assist func(uint64, int64, int64) string, free func(uint64)) {
 	// set callbacks
 	initCallback = init
 	handlerCallback = handler

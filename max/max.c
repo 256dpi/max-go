@@ -18,7 +18,7 @@ typedef struct {
   t_object obj;
   long inlet;
   void *proxy;
-  GoUintptr ref;
+  unsigned long long ref;
 } t_bridge;
 
 static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
