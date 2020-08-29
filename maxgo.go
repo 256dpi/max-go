@@ -18,7 +18,7 @@ type Instance interface {
 // must be called from the main packages init() function as the main() function
 // is never called by a Max external.
 //
-// The callbacks on the instance are never called from in parallel.
+// The callbacks on the instance are never called in parallel.
 func Init(name string, prototype Instance) {
 	// create mutex
 	var mutex sync.Mutex
