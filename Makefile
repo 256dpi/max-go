@@ -9,7 +9,7 @@ lib:
 	rm -rf sdk
 
 fmt:
-	go fmt .
-	go vet .
-	golint .
+	go fmt ./...
+	go vet ./...
+	golint ./...
 	clang-format  -style "{BasedOnStyle: Google, ColumnLimit: 120}" -i max/*.c max/*.h

@@ -112,16 +112,14 @@ func gomaxAssist(ref uint64, io, i int64) *C.char {
 	if io == 1 {
 		if int(i) < len(obj.in) {
 			return C.CString(obj.in[i].label)
-		} else {
-			return nil
 		}
 	} else {
 		if int(i) < len(obj.out) {
 			return C.CString(obj.out[i].label)
-		} else {
-			return nil
 		}
 	}
+
+	return nil
 }
 
 //export gomaxFree
@@ -154,8 +152,8 @@ func Init(name string, init func(*Object, []Atom) uint64, handler func(uint64, s
 // Object is single Max object.
 type Object struct {
 	ptr unsafe.Pointer
-	in  []Inlet
-	out []Outlet
+	in  []*Inlet
+	out []*Outlet
 }
 
 // Inlet is a single Max inlet.
@@ -166,9 +164,9 @@ type Inlet struct {
 
 // Inlet will declare an inlet. If no inlets are added to an object it will have
 // a default inlet to receive messages.
-func (o *Object) Inlet(typ Type, label string) Inlet {
+func (o *Object) Inlet(typ Type, label string) *Inlet {
 	// prepare
-	inlet := Inlet{typ: typ, label: label}
+	inlet := &Inlet{typ: typ, label: label}
 
 	// store
 	o.in = append(o.in, inlet)
@@ -177,12 +175,12 @@ func (o *Object) Inlet(typ Type, label string) Inlet {
 }
 
 // Type will return the inlets type.
-func (i Inlet) Type() Type {
+func (i *Inlet) Type() Type {
 	return i.typ
 }
 
 // Label will return the inlets label.
-func (i Inlet) Label() string {
+func (i *Inlet) Label() string {
 	return i.label
 }
 
@@ -194,7 +192,7 @@ type Outlet struct {
 }
 
 // Outlet will declare an outlet.
-func (o *Object) Outlet(typ Type, label string) Outlet {
+func (o *Object) Outlet(typ Type, label string) *Outlet {
 	// create outlet
 	var ptr unsafe.Pointer
 	switch typ {
@@ -213,7 +211,7 @@ func (o *Object) Outlet(typ Type, label string) Outlet {
 	}
 
 	// prepare
-	outlet := Outlet{typ: typ, ptr: ptr, label: label}
+	outlet := &Outlet{typ: typ, ptr: ptr, label: label}
 
 	// store
 	o.out = append(o.out, outlet)
@@ -222,17 +220,17 @@ func (o *Object) Outlet(typ Type, label string) Outlet {
 }
 
 // Type will return the outlets type.
-func (o Outlet) Type() Type {
+func (o *Outlet) Type() Type {
 	return o.typ
 }
 
 // Label will return the outlets label.
-func (o Outlet) Label() string {
+func (o *Outlet) Label() string {
 	return o.label
 }
 
 // Any will send any message.
-func (o Outlet) Any(msg string, atoms []Atom) {
+func (o *Outlet) Any(msg string, atoms []Atom) {
 	if o.typ == Any {
 		argc, argv := encodeAtoms(atoms)
 		C.outlet_anything(o.ptr, C.gensym(C.CString(msg)), C.short(argc), argv)
@@ -242,7 +240,7 @@ func (o Outlet) Any(msg string, atoms []Atom) {
 }
 
 // Bang will send a bang.
-func (o Outlet) Bang() {
+func (o *Outlet) Bang() {
 	if o.typ == Bang || o.typ == Any {
 		C.outlet_bang(o.ptr)
 	} else {
@@ -251,7 +249,7 @@ func (o Outlet) Bang() {
 }
 
 // Int will send and int.
-func (o Outlet) Int(n int64) {
+func (o *Outlet) Int(n int64) {
 	if o.typ == Int || o.typ == Any {
 		C.outlet_int(o.ptr, C.longlong(n))
 	} else {
@@ -260,7 +258,7 @@ func (o Outlet) Int(n int64) {
 }
 
 // Float will send a float.
-func (o Outlet) Float(n float64) {
+func (o *Outlet) Float(n float64) {
 	if o.typ == Float || o.typ == Any {
 		C.outlet_float(o.ptr, C.double(n))
 	} else {
@@ -269,7 +267,7 @@ func (o Outlet) Float(n float64) {
 }
 
 // List will send a list.
-func (o Outlet) List(atoms []Atom) {
+func (o *Outlet) List(atoms []Atom) {
 	if o.typ == List || o.typ == Any {
 		argc, argv := encodeAtoms(atoms)
 		C.outlet_list(o.ptr, nil, C.short(argc), argv)
