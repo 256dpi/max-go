@@ -15,9 +15,11 @@ type instance struct {
 func (i *instance) Init(obj *max.Object, args []max.Atom) {
 	max.Pretty("init", i, obj, args)
 
+	// declare inlets
 	i.in1 = obj.Inlet(max.Any, "example inlet 1", true)
 	i.in2 = obj.Inlet(max.Any, "example inlet 2", false)
 
+	// declare outlets
 	i.out1 = obj.Outlet(max.Any, "example outlet 1")
 	i.out2 = obj.Outlet(max.Any, "example outlet 2")
 }
@@ -25,6 +27,7 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) {
 func (i *instance) Handle(msg string, inlet int, data []max.Atom) {
 	max.Pretty("handle", i, msg, inlet, data)
 
+	// send to first outlet
 	i.out1.Any(msg, data)
 }
 
@@ -33,6 +36,7 @@ func (i *instance) Free() {
 }
 
 func init() {
+	// initialize Max class
 	maxgo.Init("maxgo", &instance{})
 }
 

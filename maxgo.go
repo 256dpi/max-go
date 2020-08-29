@@ -2,7 +2,6 @@ package maxgo
 
 import (
 	"reflect"
-	"sync/atomic"
 
 	"github.com/256dpi/maxgo/max"
 )
@@ -18,43 +17,23 @@ type Instance interface {
 // must be called from the main packages init() function as the main() function
 // is never called by a Max external.
 func Init(name string, prototype Instance) {
-	// prepare id counter
-	var id uint64
-
 	// create instance map
-	instances := map[uint64]Instance{}
+	instances := map[*max.Object]Instance{}
 
 	// get type
 	typ := reflect.TypeOf(prototype).Elem()
 
 	// initialize max class
-	max.Init(name, func(o *max.Object, args []max.Atom) uint64 {
-		// get reference
-		ref := atomic.AddUint64(&id, 1)
-
-		// create instance
+	max.Init(name, func(o *max.Object, args []max.Atom) {
 		instance := reflect.New(typ).Interface().(Instance)
-
-		// initialize
 		instance.Init(o, args)
-
-		// store instance
-		instances[ref] = instance
-
-		return ref
-	}, func(ref uint64, msg string, inlet int, atoms []max.Atom) {
-		// lookup instance
-		instance := instances[ref]
-
-		// handle message
+		instances[o] = instance
+	}, func(o *max.Object, msg string, inlet int, atoms []max.Atom) {
+		instance := instances[o]
 		instance.Handle(msg, inlet, atoms)
-	}, func(ref uint64) {
-		// lookup instance
-		instance := instances[ref]
-
-		// free instance
+	}, func(o *max.Object) {
+		instance := instances[o]
 		instance.Free()
-
-		delete(instances, ref)
+		delete(instances, o)
 	})
 }

@@ -11,6 +11,7 @@ import "C"
 import (
 	"fmt"
 	"reflect"
+	"sync/atomic"
 	"unsafe"
 
 	"github.com/kr/pretty"
@@ -57,22 +58,26 @@ func Pretty(a ...interface{}) {
 
 /* Classes */
 
+var counter uint64
 var objects = map[uint64]*Object{}
 
-var initCallback func(*Object, []Atom) uint64
-var handlerCallback func(uint64, string, int, []Atom)
-var freeCallback func(uint64)
+var initCallback func(*Object, []Atom)
+var handlerCallback func(*Object, string, int, []Atom)
+var freeCallback func(*Object)
 
 //export gomaxInit
 func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
+	// get ref
+	ref := atomic.AddUint64(&counter, 1)
+
 	// prepare object
-	obj := &Object{ptr: ptr}
+	obj := &Object{ref: ref, ptr: ptr}
 
 	// call init callback
-	ref := initCallback(obj, atoms)
+	initCallback(obj, atoms)
 
 	// store object
 	objects[ref] = obj
@@ -88,12 +93,20 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 
 //export gomaxMessage
 func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
+	// get object
+	obj, ok := objects[ref]
+	if !ok {
+		return
+	}
+
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
+	// TODO: Check types?
+
 	// call handle if available
 	if handlerCallback != nil {
-		handlerCallback(ref, C.GoString(msg), int(inlet), atoms)
+		handlerCallback(obj, C.GoString(msg), int(inlet), atoms)
 	}
 }
 
@@ -121,9 +134,15 @@ func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
 
 //export gomaxFree
 func gomaxFree(ref uint64) {
+	// get object
+	obj, ok := objects[ref]
+	if !ok {
+		return
+	}
+
 	// call handler if available
 	if freeCallback != nil {
-		freeCallback(ref)
+		freeCallback(obj)
 	}
 
 	// delete object
@@ -134,7 +153,7 @@ func gomaxFree(ref uint64) {
 // callbacks to initialize and free objects. This function must be called from
 // the main packages init() function as the main() function is never called by a
 // Max external.
-func Init(name string, init func(*Object, []Atom) uint64, handler func(uint64, string, int, []Atom), free func(uint64)) {
+func Init(name string, init func(*Object, []Atom), handler func(*Object, string, int, []Atom), free func(*Object)) {
 	// set callbacks
 	initCallback = init
 	handlerCallback = handler
@@ -148,6 +167,7 @@ func Init(name string, init func(*Object, []Atom) uint64, handler func(uint64, s
 
 // Object is single Max object.
 type Object struct {
+	ref uint64
 	ptr unsafe.Pointer
 	in  []*Inlet
 	out []*Outlet
