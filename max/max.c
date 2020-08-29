@@ -119,7 +119,3 @@ t_class *maxgo_class_new(const char *name) {
 
   return class;
 }
-
-void maxgo_class_add_method(t_class *class, const char *name) {
-  class_addmethod(class, (method)bridge_gimme, name, A_GIMME, 0);
-}

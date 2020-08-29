@@ -126,17 +126,6 @@ func NewClass(name string, init func(Object, []Atom) uintptr, handler func(uintp
 	return class
 }
 
-// AddMethod will add a method with the specified name.
-func (c Class) AddMethod(name string) {
-	// check
-	if c.reg {
-		panic("maxgo: class already registered")
-	}
-
-	// add method
-	C.maxgo_class_add_method((*C.t_class)(c.ptr), C.CString(name))
-}
-
 // Register will register the class if not already registered.
 func (c Class) Register() {
 	// check
