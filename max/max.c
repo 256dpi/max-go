@@ -4,8 +4,8 @@
 
 /* Main */
 
-extern void ext_main(void * r) {
-    // do nothing
+extern void ext_main(void *r) {
+  // do nothing
 }
 
 /* Basic */

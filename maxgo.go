@@ -9,8 +9,7 @@ import (
 
 // Instance is a generic object instance.
 type Instance interface {
-	Init(obj max.Object, args []max.Atom)
-	Describe(inlet bool, num int) string
+	Init(obj *max.Object, args []max.Atom)
 	Handle(msg string, inlet int, data []max.Atom)
 	Free()
 }
@@ -29,7 +28,7 @@ func Init(name string, prototype Instance) {
 	typ := reflect.TypeOf(prototype).Elem()
 
 	// initialize max class
-	max.Init(name, func(o max.Object, args []max.Atom) uint64 {
+	max.Init(name, func(o *max.Object, args []max.Atom) uint64 {
 		// get reference
 		ref := atomic.AddUint64(&id, 1)
 
@@ -49,12 +48,6 @@ func Init(name string, prototype Instance) {
 
 		// handle message
 		instance.Handle(msg, inlet, atoms)
-	}, func(ref uint64, io int64, i int64) string {
-		// lookup instance
-		instance := instances[ref]
-
-		// describe port
-		return instance.Describe(io == 1, int(i))
 	}, func(ref uint64) {
 		// lookup instance
 		instance := instances[ref]

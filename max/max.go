@@ -60,23 +60,35 @@ func Pretty(a ...interface{}) {
 
 /* Classes */
 
-var initCallback func(Object, []Atom) uint64
+var objects = map[uint64]*Object{}
+
+var initCallback func(*Object, []Atom) uint64
 var handlerCallback func(uint64, string, int, []Atom)
-var assistCallback func(uint64, int64, int64) string
 var freeCallback func(uint64)
 
 //export gomaxInit
-func gomaxInit(obj unsafe.Pointer, argc int64, argv *C.t_atom) uint64 {
+func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) uint64 {
+	// decode atoms
 	atoms := decodeAtoms(argc, argv)
-	if initCallback != nil {
-		return initCallback(Object{ptr: obj}, atoms)
-	}
-	return 0
+
+	// prepare object
+	obj := &Object{ptr: ptr}
+
+	// call init callback
+	ref := initCallback(obj, atoms)
+
+	// store object
+	objects[ref] = obj
+
+	return ref
 }
 
 //export gomaxMessage
 func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
+	// decode atoms
 	atoms := decodeAtoms(argc, argv)
+
+	// call handle if available
 	if handlerCallback != nil {
 		handlerCallback(ref, C.GoString(msg), int(inlet), atoms)
 	}
@@ -84,28 +96,47 @@ func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_at
 
 //export gomaxAssist
 func gomaxAssist(ref uint64, io, i int64) *C.char {
-	if assistCallback != nil {
-		return C.CString(assistCallback(ref, io, i))
+	// get object
+	obj, ok := objects[ref]
+	if !ok {
+		return nil
 	}
-	return C.CString("")
+
+	// return info
+	if io == 1 {
+		if int(i) < len(obj.in) {
+			return C.CString(obj.in[i].info)
+		} else {
+			return nil
+		}
+	} else {
+		if int(i) < len(obj.out) {
+			return C.CString(obj.out[i].info)
+		} else {
+			return nil
+		}
+	}
 }
 
 //export gomaxFree
 func gomaxFree(ref uint64) {
+	// call handler if available
 	if freeCallback != nil {
 		freeCallback(ref)
 	}
+
+	// delete object
+	delete(objects, ref)
 }
 
 // Init will initialize the Max class with the specified name using the provided
 // callbacks to initialize and free objects. This function must be called from
 // the main packages init() function as the main() function is never called by a
 // Max external.
-func Init(name string, init func(Object, []Atom) uint64, handler func(uint64, string, int, []Atom), assist func(uint64, int64, int64) string, free func(uint64)) {
+func Init(name string, init func(*Object, []Atom) uint64, handler func(uint64, string, int, []Atom), free func(uint64)) {
 	// set callbacks
 	initCallback = init
 	handlerCallback = handler
-	assistCallback = assist
 	freeCallback = free
 
 	// initialize
@@ -117,36 +148,43 @@ func Init(name string, init func(Object, []Atom) uint64, handler func(uint64, st
 // Object is single Max object.
 type Object struct {
 	ptr unsafe.Pointer
+	in  []Inlet
+	out []Outlet
 }
 
 // Inlet is a single Max inlet.
 type Inlet struct {
-	typ Type
-	ptr unsafe.Pointer
-}
-
-// Outlet is a single MAx outlet.
-type Outlet struct {
-	typ Type
-	ptr unsafe.Pointer
+	typ  Type
+	ptr  unsafe.Pointer
+	info string
 }
 
 // Inlet will declare an inlet.
-func (o Object) Inlet(typ Type) Inlet {
+func (o *Object) Inlet(typ Type, info string) Inlet {
+	// create inlet
+	var ptr unsafe.Pointer
 	switch typ {
 	case Any:
-		return Inlet{typ: typ, ptr: C.inlet_new(o.ptr, nil)}
+		ptr = C.inlet_new(o.ptr, nil)
 	case Bang:
-		return Inlet{typ: typ, ptr: C.inlet_new(o.ptr, C.CString("bang"))}
+		ptr = C.inlet_new(o.ptr, C.CString("bang"))
 	case Int:
-		return Inlet{typ: typ, ptr: C.intin(o.ptr, C.short(1))}
+		ptr = C.intin(o.ptr, C.short(1))
 	case Float:
-		return Inlet{typ: typ, ptr: C.floatin(o.ptr, C.short(1))}
+		ptr = C.floatin(o.ptr, C.short(1))
 	case List:
-		return Inlet{typ: typ, ptr: C.inlet_new(o.ptr, C.CString("list"))}
+		ptr = C.inlet_new(o.ptr, C.CString("list"))
 	default:
 		panic("maxgo: invalid inlet type")
 	}
+
+	// prepare
+	inlet := Inlet{typ: typ, ptr: ptr, info: info}
+
+	// store
+	o.in = append(o.in, inlet)
+
+	return inlet
 }
 
 // Type will return the inlets type.
@@ -154,22 +192,39 @@ func (i Inlet) Type() Type {
 	return i.typ
 }
 
+// Outlet is a single MAx outlet.
+type Outlet struct {
+	typ  Type
+	ptr  unsafe.Pointer
+	info string
+}
+
 // Outlet will declare an outlet.
-func (o Object) Outlet(typ Type) Outlet {
+func (o *Object) Outlet(typ Type, info string) Outlet {
+	// create outlet
+	var ptr unsafe.Pointer
 	switch typ {
 	case Any:
-		return Outlet{typ: typ, ptr: C.outlet_new(o.ptr, nil)}
+		ptr = C.outlet_new(o.ptr, nil)
 	case Bang:
-		return Outlet{typ: typ, ptr: C.bangout(o.ptr)}
+		ptr = C.bangout(o.ptr)
 	case Int:
-		return Outlet{typ: typ, ptr: C.intout(o.ptr)}
+		ptr = C.intout(o.ptr)
 	case Float:
-		return Outlet{typ: typ, ptr: C.floatout(o.ptr)}
+		ptr = C.floatout(o.ptr)
 	case List:
-		return Outlet{typ: typ, ptr: C.listout(o.ptr)}
+		ptr = C.listout(o.ptr)
 	default:
 		panic("maxgo: invalid outlet type")
 	}
+
+	// prepare
+	outlet := Outlet{typ: typ, ptr: ptr, info: info}
+
+	// store
+	o.out = append(o.out, outlet)
+
+	return outlet
 }
 
 // Type will return the outlets type.
