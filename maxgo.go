@@ -10,9 +10,9 @@ import (
 
 // Instance is a generic object instance.
 type Instance interface {
-	Init(obj max.Object)
+	Init(obj max.Object, args []max.Atom)
 	Describe(inlet bool, num int) string
-	Handle(msg string, inlet int, atoms []max.Atom)
+	Handle(msg string, inlet int, data []max.Atom)
 	Free()
 }
 
@@ -25,13 +25,13 @@ func Register(name string, prototype Instance) {
 	typ := reflect.TypeOf(prototype).Elem()
 
 	// create class
-	class := max.NewClass(name, func(o max.Object) uintptr {
+	class := max.NewClass(name, func(o max.Object, args []max.Atom) uintptr {
 		// create instance
 		value := reflect.New(typ)
 		instance := value.Interface().(Instance)
 
 		// initialize
-		instance.Init(o)
+		instance.Init(o, args)
 
 		// store instance
 		instances[value.Pointer()] = instance

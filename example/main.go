@@ -13,8 +13,8 @@ type instance struct {
 	out max.Outlet
 }
 
-func (i *instance) Init(obj max.Object) {
-	max.Pretty("init", i, obj)
+func (i *instance) Init(obj max.Object, args []max.Atom) {
+	max.Pretty("init", i, obj, args)
 
 	obj.AnyIn()
 	i.out = obj.AnyOut()
@@ -30,10 +30,10 @@ func (i *instance) Describe(inlet bool, num int) string {
 	}
 }
 
-func (i *instance) Handle(msg string, inlet int, atoms []max.Atom) {
-	max.Pretty("handle", i, msg, inlet, atoms)
+func (i *instance) Handle(msg string, inlet int, data []max.Atom) {
+	max.Pretty("handle", i, msg, inlet, data)
 
-	i.out.List(atoms)
+	i.out.List(data)
 }
 
 func (i *instance) Free() {

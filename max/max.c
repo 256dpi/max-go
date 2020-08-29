@@ -33,7 +33,7 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   bridge->class = class;
 
   // initialize object
-  bridge->ref = gomaxInit(name->s_name, &bridge->obj);
+  bridge->ref = gomaxInit(name->s_name, &bridge->obj, argc, argv);
 
   // TODO: A proxy also allocates an inlet...
 
