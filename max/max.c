@@ -16,7 +16,6 @@ static t_class *class = NULL;
 
 typedef struct {
   t_object obj;
-  t_symbol *name;
   long inlet;
   void *proxy;
   GoUintptr ref;
@@ -25,9 +24,6 @@ typedef struct {
 static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   // allocate bridge
   t_bridge *bridge = object_alloc(class);
-
-  // set info
-  bridge->name = name;
 
   // initialize object
   bridge->ref = gomaxInit(&bridge->obj, argc, argv);
