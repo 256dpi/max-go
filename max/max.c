@@ -108,16 +108,14 @@ t_class *maxgo_class_new(const char *name) {
   t_class *class = class_new(name, (method)bridge_new, (method)bridge_free,
                              (long)sizeof(t_bridge), 0L, A_GIMME, 0);
 
-  // add base methods for leftmost inlet
+  // add generic methods
   class_addmethod(class, (method)bridge_bang, "bang", 0);
   class_addmethod(class, (method)bridge_int, "int", A_LONG, 0);
   class_addmethod(class, (method)bridge_float, "float", A_FLOAT, 0);
+  class_addmethod(class, (method)bridge_gimme, "list", A_GIMME, 0);
   class_addmethod(class, (method)bridge_gimme, "anything", A_GIMME, 0);
   class_addmethod(class, (method)bridge_dblclick, "dblclick", 0);
   class_addmethod(class, (method)bridge_assist, "assist", A_CANT, 0);
-
-  // TODO: How to handle multi value messages that do not start with a symbol?
-  //  -> Now they are dispatched after each other.
 
   return class;
 }
