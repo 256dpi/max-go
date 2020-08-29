@@ -2,6 +2,12 @@
 
 #include "max.h"
 
+/* Main */
+
+extern void ext_main(void * r) {
+    // do nothing
+}
+
 /* Basic */
 
 void maxgo_log(const char *str) { post(str); }

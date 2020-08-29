@@ -97,7 +97,10 @@ func gomaxFree(ref uint64) {
 	}
 }
 
-// Init will initialize the Max class with the specified name using the provided callbacks to initialize and free objects.
+// Init will initialize the Max class with the specified name using the provided
+// callbacks to initialize and free objects. This function must be called from
+// the main packages init() function as the main() function is never called by a
+// Max external.
 func Init(name string, init func(Object, []Atom) uint64, handler func(uint64, string, int, []Atom), assist func(uint64, int64, int64) string, free func(uint64)) {
 	// set callbacks
 	initCallback = init

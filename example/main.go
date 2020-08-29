@@ -3,8 +3,6 @@ package main
 import (
 	"fmt"
 
-	"C"
-
 	"github.com/256dpi/maxgo"
 	"github.com/256dpi/maxgo/max"
 )
@@ -40,11 +38,10 @@ func (i *instance) Free() {
 	max.Pretty("free", i)
 }
 
-//export ext_main
-func ext_main(uintptr) {
-	main()
+func init() {
+	maxgo.Init("maxgo", &instance{})
 }
 
 func main() {
-	maxgo.Init("maxgo", &instance{})
+	// not called
 }

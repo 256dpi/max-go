@@ -17,7 +17,9 @@ type Instance interface {
 	Free()
 }
 
-// Init will initialize the Max class using the provided instance.
+// Init will initialize the Max class using the provided instance. This function
+// must be called from the main packages init() function as the main() function
+// is never called by a Max external.
 func Init(name string, prototype Instance) {
 	// prepare id counter
 	var id uint64
