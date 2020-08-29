@@ -10,12 +10,17 @@ import (
 	"runtime"
 )
 
-var name = flag.String("name", "maxgo", "the name of the external")
+var name = flag.String("name", "", "the name of the external")
 var cross = flag.Bool("cross", false, "cross compile for Windows on macOS")
 
 func main() {
 	// parse flags
 	flag.Parse()
+
+	// check name
+	if *name == "" {
+		panic("missing external name")
+	}
 
 	// log
 	fmt.Println("==> checking system...")
@@ -74,7 +79,7 @@ func buildDarwin() {
 	check(os.Rename(filepath.Join(".", "out", *name), filepath.Join(".", "out", *name+".mxo", "MacOS", *name)))
 
 	// write info plist
-	check(ioutil.WriteFile(filepath.Join(".", "out", *name+".mxo", "Info.plist"), []byte(infoPlist), os.ModePerm))
+	check(ioutil.WriteFile(filepath.Join(".", "out", *name+".mxo", "Info.plist"), []byte(infoPlist(*name)), os.ModePerm))
 
 	// write package info
 	check(ioutil.WriteFile(filepath.Join(".", "out", *name+".mxo", "PkgInfo"), []byte(pkgInfo), os.ModePerm))

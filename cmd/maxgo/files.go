@@ -2,18 +2,19 @@ package main
 
 const pkgInfo = `iLaX????`
 
-const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
+func infoPlist(name string) string {
+	return `<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleExecutable</key>
-	<string>maxgo</string>
+	<string>` + name + `</string>
 	<key>CFBundleIconFile</key>
 	<string></string>
 	<key>CFBundleIdentifier</key>
-	<string>com.example.maxgo</string>
+	<string>com.maxgo.` + name + `</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>1.0.0</string>
 	<key>CFBundlePackageType</key>
@@ -28,10 +29,11 @@ const infoPlist = `<?xml version="1.0" encoding="UTF-8"?>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0.0</string>
 	<key>CFBundleLongVersionString</key>
-	<string>maxgo 1.0.0</string>
+	<string>` + name + ` 1.0.0</string>
 
 	<key>CSResourcesFileMapped</key>
 	<true/>
 </dict>
 </plist>
 `
+}
