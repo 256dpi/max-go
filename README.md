@@ -24,8 +24,7 @@ go get -u github.com/256dpi/maxgo/cmd/maxgo
 This will install the `maxgo` command line utility. You may need to add Go's `bin` directory tou your `PATH` variable to access the CLI in the terminal:
 
 ```sh
-# for zsh
-echo 'export PATH=~/go/bin:$PATH' >> ~/.zprofile
+echo 'export PATH=~/go/bin:$PATH' >> ~/.zprofile # for zsh
 ```
 
 Cross compilation on macOS for Windows additionally requires the `mingw-w64` toolchain:
