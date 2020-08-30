@@ -39,17 +39,17 @@ type Atom = interface{}
 
 // Log will print a message to the max console.
 func Log(format string, args ...interface{}) {
-	C.maxgo_log(C.CString(fmt.Sprintf(format, args...)))
+	C.maxgo_log(C.CString(fmt.Sprintf(format, args...))) // string freed by receiver
 }
 
 // Error will print an error to the max console.
 func Error(format string, args ...interface{}) {
-	C.maxgo_error(C.CString(fmt.Sprintf(format, args...)))
+	C.maxgo_error(C.CString(fmt.Sprintf(format, args...))) // string freed by receiver
 }
 
 // Alert will show an alert dialog.
 func Alert(format string, args ...interface{}) {
-	C.maxgo_alert(C.CString(fmt.Sprintf(format, args...)))
+	C.maxgo_alert(C.CString(fmt.Sprintf(format, args...))) // string freed by receiver
 }
 
 // Pretty will pretty print the provided values.
@@ -152,11 +152,11 @@ func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
 	// return label
 	if io == 1 {
 		if int(i) < len(obj.in) {
-			return C.CString(obj.in[i].label), obj.in[i].hot
+			return C.CString(obj.in[i].label), obj.in[i].hot // string freed by receiver
 		}
 	} else {
 		if int(i) < len(obj.out) {
-			return C.CString(obj.out[i].label), false
+			return C.CString(obj.out[i].label), false // string freed by receiver
 		}
 	}
 
@@ -208,7 +208,7 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, st
 	freeCallback = free
 
 	// initialize
-	C.maxgo_init(C.CString(name))
+	C.maxgo_init(C.CString(name)) // string freed by receiver
 
 	// set flag
 	initDone = true
@@ -278,7 +278,7 @@ func (o *Outlet) Label() string {
 func (o *Outlet) Any(msg string, atoms []Atom) {
 	if o.typ == Any {
 		argc, argv := encodeAtoms(atoms)
-		C.outlet_anything(o.ptr, C.gensym(C.CString(msg)), C.short(argc), argv)
+		C.outlet_anything(o.ptr, C.maxgo_gensym(C.CString(msg)), C.short(argc), argv) // string freed by receiver
 	} else {
 		Error("any sent to outlet of type %s", o.typ)
 	}
@@ -409,7 +409,7 @@ func encodeAtoms(atoms []Atom) (argc int64, argv *C.t_atom) {
 		case float64:
 			C.atom_setfloat(&array[i], C.double(atom))
 		case string:
-			C.atom_setsym(&array[i], C.gensym(C.CString(atom)))
+			C.atom_setsym(&array[i], C.maxgo_gensym(C.CString(atom))) // string freed by receiver
 		}
 	}
 

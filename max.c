@@ -10,11 +10,26 @@ extern void ext_main(void *r) {
 
 /* Basic */
 
-void maxgo_log(const char *str) { post(str); }
+void maxgo_log(char *str) {
+  post(str);
+  free(str);
+}
 
-void maxgo_error(const char *str) { error(str); }
+void maxgo_error(char *str) {
+  error(str);
+  free(str);
+}
 
-void maxgo_alert(const char *str) { ouchstring(str); }
+void maxgo_alert(char *str) {
+  ouchstring(str);
+  free(str);
+}
+
+t_symbol *maxgo_gensym(char *str) {
+  t_symbol *sym = gensym(str);
+  free(str);
+  return sym;
+}
 
 /* Classes */
 
@@ -113,6 +128,9 @@ static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf)
 
   // copy label
   strncpy_zero(buf, ret.r0, 512);
+
+  // free string
+  free(ret.r0);
 }
 
 static void bridge_inletinfo(t_bridge *bridge, void *b, long i, char *v) {
@@ -123,6 +141,9 @@ static void bridge_inletinfo(t_bridge *bridge, void *b, long i, char *v) {
   if (!ret.r1) {
     *v = 1;
   }
+
+  // free string
+  free(ret.r0);
 }
 
 static void bridge_free(t_bridge *bridge) {
@@ -138,7 +159,7 @@ static void bridge_free(t_bridge *bridge) {
   freebytes(bridge->proxies, bridge->num_proxies * sizeof(void *));
 }
 
-void maxgo_init(const char *name) {
+void maxgo_init(char *name) {
   // check class
   if (class != NULL) {
     error("maxgo_init: has already been called");
@@ -161,6 +182,9 @@ void maxgo_init(const char *name) {
 
   // register class
   class_register(CLASS_BOX, class);
+
+  // free name
+  free(name);
 }
 
 /* Threads */

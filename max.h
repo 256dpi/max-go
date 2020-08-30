@@ -7,12 +7,11 @@
 
 #include <ext.h>
 
-void maxgo_log(const char *str);
-void maxgo_error(const char *str);
-void maxgo_alert(const char *str);
-
-void maxgo_init(const char *name);
-
+void maxgo_log(char *str);
+void maxgo_error(char *str);
+void maxgo_alert(char *str);
+t_symbol *maxgo_gensym(char *name);
+void maxgo_init(char *name);
 void maxgo_defer(unsigned long long ref);
 
 #endif
