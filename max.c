@@ -41,6 +41,11 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   // set reference
   bridge->ref = ret.r1;
 
+  // check reference
+  if (bridge->ref == 0) {
+    return NULL;
+  }
+
   // allocate proxy list
   bridge->proxies = (void **)getbytes(bridge->num_proxies * sizeof(void *));
 

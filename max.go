@@ -61,7 +61,7 @@ func Pretty(a ...interface{}) {
 
 var counter uint64
 
-var initCallback func(*Object, []Atom)
+var initCallback func(*Object, []Atom) bool
 var handlerCallback func(*Object, string, int, []Atom)
 var freeCallback func(*Object)
 
@@ -85,7 +85,10 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	objectsMutex.Unlock()
 
 	// call init callback
-	initCallback(obj, atoms)
+	ok := initCallback(obj, atoms)
+	if !ok {
+		return 0, 0
+	}
 
 	// determine required proxies
 	var proxies int
@@ -189,7 +192,7 @@ var initDone bool
 // and free the object when it is not used anymore. The callbacks are usually
 // called on the Max main thread. However, the handler may be called from and
 // unknown thread in parallel to the other callbacks.
-func Init(name string, init func(*Object, []Atom), handler func(*Object, string, int, []Atom), free func(*Object)) {
+func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, string, int, []Atom), free func(*Object)) {
 	// ensure mutex
 	initMutex.Lock()
 	defer initMutex.Unlock()

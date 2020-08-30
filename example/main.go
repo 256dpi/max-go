@@ -16,6 +16,11 @@ type instance struct {
 }
 
 func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) bool {
+	// check if doomed
+	if len(args) > 0 && args[0] == "fail" {
+		return false
+	}
+
 	// check if benchmark
 	if len(args) > 0 && args[0] == "bench" {
 		i.bench = true

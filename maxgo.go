@@ -28,7 +28,7 @@ func Register(name string, prototype Instance) {
 	typ := reflect.TypeOf(prototype).Elem()
 
 	// initialize max class
-	Init(name, func(obj *Object, args []Atom) {
+	Init(name, func(obj *Object, args []Atom) bool {
 		// allocate instance
 		instance := reflect.New(typ).Interface().(Instance)
 
@@ -39,13 +39,15 @@ func Register(name string, prototype Instance) {
 
 		// return if not ok
 		if !ok {
-			return
+			return false
 		}
 
 		// store instance
 		mutex.Lock()
 		instances[obj] = instance
 		mutex.Unlock()
+
+		return true
 	}, func(obj *Object, msg string, inlet int, atoms []Atom) {
 		// get instance
 		mutex.Lock()
