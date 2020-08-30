@@ -15,7 +15,7 @@ type instance struct {
 	bench bool
 }
 
-func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) {
+func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) bool {
 	// check if benchmark
 	if len(args) > 0 && args[0] == "bench" {
 		i.bench = true
@@ -57,6 +57,8 @@ func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) {
 			}
 		}()
 	}
+	
+	return true
 }
 
 func (i *instance) Handle(msg string, inlet int, data []maxgo.Atom) {

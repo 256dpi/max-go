@@ -7,7 +7,7 @@ import (
 
 // Instance is a generic object instance.
 type Instance interface {
-	Init(obj *Object, args []Atom)
+	Init(obj *Object, args []Atom) bool
 	Handle(msg string, inlet int, data []Atom)
 	Free()
 }
@@ -34,8 +34,13 @@ func Register(name string, prototype Instance) {
 
 		// call init
 		obj.Lock()
-		instance.Init(obj, args)
+		ok := instance.Init(obj, args)
 		obj.Unlock()
+
+		// return if not ok
+		if !ok {
+			return
+		}
 
 		// store instance
 		mutex.Lock()
@@ -47,6 +52,11 @@ func Register(name string, prototype Instance) {
 		instance := instances[obj]
 		mutex.Unlock()
 
+		// return if nil
+		if instance == nil {
+			return
+		}
+
 		// handle message
 		obj.Lock()
 		instance.Handle(msg, inlet, atoms)
@@ -57,6 +67,11 @@ func Register(name string, prototype Instance) {
 		instance := instances[obj]
 		delete(instances, obj)
 		mutex.Unlock()
+
+		// return if nil
+		if instance == nil {
+			return
+		}
 
 		// call free
 		obj.Lock()
