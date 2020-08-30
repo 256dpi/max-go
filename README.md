@@ -10,27 +10,27 @@
 
 First you need to ensure you have recent version of [Go](https://golang.org) installed. On macOS simply install it using [brew](https://brew.sh):
 
-```
+```sh
 brew install go
 ```
 
 Then you can install the package and CLI using Go's module management:
 
-```
-go get github.com/256dpi/maxgo
-go get github.com/256dpi/maxgo/cmd/maxgo
+```sh
+go get -u github.com/256dpi/maxgo
+go get -u github.com/256dpi/maxgo/cmd/maxgo
 ``` 
 
 This will install the `maxgo` command line utility. You may need to add Go's `bin` directory tou your `PATH` variable to access the CLI in the terminal:
 
-```
+```sh
 # for zsh
 echo 'export PATH=~/go/bin:$PATH' >> ~/.zprofile
 ```
 
 Cross compilation on macOS for Windows additionally requires the `mingw-w64` toolchain:
 
-```
+```sh
 brew install mingw-w64
 ```
 
