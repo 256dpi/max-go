@@ -57,7 +57,7 @@ func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) bool {
 			}
 		}()
 	}
-	
+
 	return true
 }
 
