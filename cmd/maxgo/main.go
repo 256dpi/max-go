@@ -13,17 +13,13 @@ import (
 )
 
 var name = flag.String("name", "", "the name of the external")
+var out = flag.String("out", "out", "the output directory")
 var cross = flag.Bool("cross", false, "cross compile for Windows on macOS")
 var install = flag.String("install", "", "install into specified package")
 
 func main() {
 	// parse flags
 	flag.Parse()
-
-	// check name
-	if *name == "" {
-		panic("missing external name")
-	}
 
 	// log
 	fmt.Println("==> checking system...")
@@ -48,15 +44,34 @@ func main() {
 		}
 	}
 
+	// log
+	fmt.Println("==> preparing build...")
+
+	// check name
+	if *name == "" {
+		panic("missing external name")
+	}
+
+	// get out dir
+	var outDir = filepath.Join(".", "out")
+	if *out != "" {
+		outDir, err = filepath.Abs(*out)
+		check(err)
+	}
+
+	// print
+	fmt.Printf("name: %s\n", *name)
+	fmt.Printf("out: %s\n", outDir)
+
 	// build
 	switch runtime.GOOS {
 	case "darwin":
-		buildDarwin()
+		buildDarwin(outDir)
 		if *cross {
-			crossBuildWindows()
+			crossBuildWindows(outDir)
 		}
 	case "windows":
-		buildWindows()
+		buildWindows(outDir)
 	}
 
 	// install
@@ -78,9 +93,9 @@ func main() {
 		// copy external
 		switch runtime.GOOS {
 		case "darwin":
-			check(copy.Copy(filepath.Join(".", "out", *name+".mxo"), filepath.Join(dir, *name+".mxo")))
+			check(copy.Copy(filepath.Join(outDir, *name+".mxo"), filepath.Join(dir, *name+".mxo")))
 		case "windows":
-			check(copy.Copy(filepath.Join(".", "out", *name+".mxe64"), filepath.Join(dir, *name+".mxe64")))
+			check(copy.Copy(filepath.Join(outDir, *name+".mxe64"), filepath.Join(dir, *name+".mxe64")))
 		}
 	}
 
@@ -88,7 +103,7 @@ func main() {
 	fmt.Println("==> done!")
 }
 
-func buildDarwin() {
+func buildDarwin(outDir string) {
 	// log
 	fmt.Println("==> building...")
 
@@ -99,36 +114,36 @@ func buildDarwin() {
 	)
 
 	// ensure directory
-	check(os.MkdirAll(filepath.Join(".", "out", *name+".mxo", "MacOS"), os.ModePerm))
+	check(os.MkdirAll(filepath.Join(outDir, *name+".mxo", "MacOS"), os.ModePerm))
 
 	// copy binary
-	check(os.Rename(filepath.Join(".", "out", *name), filepath.Join(".", "out", *name+".mxo", "MacOS", *name)))
+	check(os.Rename(filepath.Join(outDir, *name), filepath.Join(outDir, *name+".mxo", "MacOS", *name)))
 
 	// write info plist
-	check(ioutil.WriteFile(filepath.Join(".", "out", *name+".mxo", "Info.plist"), []byte(infoPlist(*name)), os.ModePerm))
+	check(ioutil.WriteFile(filepath.Join(outDir, *name+".mxo", "Info.plist"), []byte(infoPlist(*name)), os.ModePerm))
 
 	// write package info
-	check(ioutil.WriteFile(filepath.Join(".", "out", *name+".mxo", "PkgInfo"), []byte(pkgInfo), os.ModePerm))
+	check(ioutil.WriteFile(filepath.Join(outDir, *name+".mxo", "PkgInfo"), []byte(pkgInfo), os.ModePerm))
 }
 
-func buildWindows() {
+func buildWindows(outDir string) {
 	// log
 	fmt.Println("==> building...")
 
 	// build
 	run("go",
-		[]string{"build", "-v", "-buildmode=c-shared", "-o", filepath.Join("out", *name+".mxe64")},
+		[]string{"build", "-v", "-buildmode=c-shared", "-o", filepath.Join(outDir, *name+".mxe64")},
 		[]string{"CGO_ENABLED=1"},
 	)
 }
 
-func crossBuildWindows() {
+func crossBuildWindows(outDir string) {
 	// log
 	fmt.Println("==> cross building...")
 
 	// build
 	run("go",
-		[]string{"build", "-v", "-buildmode=c-shared", "-o", filepath.Join("out", *name+".mxe64")},
+		[]string{"build", "-v", "-buildmode=c-shared", "-o", filepath.Join(outDir, *name+".mxe64")},
 		[]string{"CC=x86_64-w64-mingw32-gcc", "GOOS=windows", "GOARCH=amd64", "CGO_ENABLED=1"},
 	)
 }
