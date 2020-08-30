@@ -86,14 +86,14 @@ func main() {
 }
 ```
 
-Compile the external to the `out` directory:
+Compile the external to the `dist` directory:
 
 ```
-maxgo -name example
+maxgo -name example -out dist
 ```
 
 You can also cross compile (macOS only) and install the external:
 
 ```
-maxgo -name example -cross -install example
+maxgo -name example -out dist -cross -install example
 ```

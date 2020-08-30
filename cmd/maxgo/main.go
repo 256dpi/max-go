@@ -87,6 +87,9 @@ func main() {
 		dir, err := filepath.Abs(filepath.Join(user, "Documents", "Max 8", "Packages", *install, "externals"))
 		check(err)
 
+		// log
+		fmt.Printf("target: %s\n", dir)
+
 		// create path
 		check(os.MkdirAll(dir, os.ModePerm))
 
