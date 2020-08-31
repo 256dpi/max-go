@@ -111,7 +111,7 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 		case Any:
 			outlet.ptr = C.outlet_new(obj.ptr, nil)
 		default:
-			panic("maxgo: invalid outlet type")
+			panic("invalid outlet type")
 		}
 	}
 
@@ -131,11 +131,44 @@ func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_at
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
-	// TODO: Check types?
+	// get inlet
+	in := obj.in[inlet]
+	if in == nil {
+		return
+	}
+
+	// get name
+	name := C.GoString(msg)
+
+	// check name
+	if in.typ != Any && Type(name) != in.typ {
+		Error("invalid message received on inlet %d", inlet)
+		return
+	}
+
+	// check atoms
+	if in.typ == Bang && len(atoms) != 0 || (in.typ == Int || in.typ == Float) && len(atoms) != 1 {
+		Error("unexpected input received on inlet %d", inlet)
+		return
+	}
+
+	// check types
+	switch in.typ {
+	case Int:
+		if _, ok := atoms[0].(int64); !ok {
+			Error("wrong input received on inlet %d", inlet)
+			return
+		}
+	case Float:
+		if _, ok := atoms[0].(float64); !ok {
+			Error("wrong input received on inlet %d", inlet)
+			return
+		}
+	}
 
 	// call handler if available
 	if handlerCallback != nil {
-		handlerCallback(obj, int(inlet), C.GoString(msg), atoms)
+		handlerCallback(obj, int(inlet), name, atoms)
 	}
 }
 
@@ -199,7 +232,7 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, in
 
 	// check flag
 	if initDone {
-		panic("maxgo: already initialized")
+		panic("already initialized")
 	}
 
 	// set callbacks
