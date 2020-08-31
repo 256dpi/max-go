@@ -66,10 +66,10 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 	return true
 }
 
-func (i *instance) Handle(msg string, inlet int, data []max.Atom) {
+func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 	// check bench
 	if !i.bench {
-		max.Pretty("handle", msg, inlet, data)
+		max.Pretty("handle", inlet, msg, data)
 	}
 
 	// send to first outlet
