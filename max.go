@@ -185,11 +185,13 @@ func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
 	// return label
 	if io == 1 {
 		if int(i) < len(obj.in) {
-			return C.CString(obj.in[i].label), obj.in[i].hot // string freed by receiver
+			label := fmt.Sprintf("%s (%s)", obj.in[i].label, obj.in[i].typ)
+			return C.CString(label), obj.in[i].hot // string freed by receiver
 		}
 	} else {
 		if int(i) < len(obj.out) {
-			return C.CString(obj.out[i].label), false // string freed by receiver
+			label := fmt.Sprintf("%s (%s)", obj.out[i].label, obj.out[i].typ)
+			return C.CString(label), false // string freed by receiver
 		}
 	}
 
