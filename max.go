@@ -52,7 +52,7 @@ func Alert(format string, args ...interface{}) {
 	C.maxgo_alert(C.CString(fmt.Sprintf(format, args...))) // string freed by receiver
 }
 
-// Pretty will pretty print the provided values.
+// Pretty will pretty print and log the provided values.
 func Pretty(a ...interface{}) {
 	Log(pretty.Sprint(a...))
 }
