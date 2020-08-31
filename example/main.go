@@ -88,7 +88,7 @@ func (i *instance) Free() {
 
 func init() {
 	// initialize Max class
-	max.Register("max", &instance{})
+	max.Register("maxgo", &instance{})
 }
 
 func main() {
