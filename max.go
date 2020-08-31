@@ -156,12 +156,12 @@ func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_at
 	switch in.typ {
 	case Int:
 		if _, ok := atoms[0].(int64); !ok {
-			Error("wrong input received on inlet %d", inlet)
+			Error("invalid input received on inlet %d", inlet)
 			return
 		}
 	case Float:
 		if _, ok := atoms[0].(float64); !ok {
-			Error("wrong input received on inlet %d", inlet)
+			Error("invalid input received on inlet %d", inlet)
 			return
 		}
 	}
