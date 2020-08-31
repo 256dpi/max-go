@@ -25,11 +25,11 @@ type Type string
 
 // The available inlet and outlet types.
 const (
-	Any   Type = "any"
 	Bang  Type = "bang"
 	Int   Type = "int"
 	Float Type = "float"
 	List  Type = "list"
+	Any   Type = "any"
 )
 
 // Atom is a Max atom of type int64, float64 or string.
@@ -100,8 +100,6 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	for i := len(obj.out) - 1; i >= 0; i-- {
 		outlet := obj.out[i]
 		switch outlet.typ {
-		case Any:
-			outlet.ptr = C.outlet_new(obj.ptr, nil)
 		case Bang:
 			outlet.ptr = C.bangout(obj.ptr)
 		case Int:
@@ -110,6 +108,8 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 			outlet.ptr = C.floatout(obj.ptr)
 		case List:
 			outlet.ptr = C.listout(obj.ptr)
+		case Any:
+			outlet.ptr = C.outlet_new(obj.ptr, nil)
 		default:
 			panic("maxgo: invalid outlet type")
 		}
@@ -274,16 +274,6 @@ func (o *Outlet) Label() string {
 	return o.label
 }
 
-// Any will send any message.
-func (o *Outlet) Any(msg string, atoms []Atom) {
-	if o.typ == Any {
-		argc, argv := encodeAtoms(atoms)
-		C.outlet_anything(o.ptr, C.maxgo_gensym(C.CString(msg)), C.short(argc), argv) // string freed by receiver
-	} else {
-		Error("any sent to outlet of type %s", o.typ)
-	}
-}
-
 // Bang will send a bang.
 func (o *Outlet) Bang() {
 	if o.typ == Bang || o.typ == Any {
@@ -318,6 +308,16 @@ func (o *Outlet) List(atoms []Atom) {
 		C.outlet_list(o.ptr, nil, C.short(argc), argv)
 	} else {
 		Error("list sent to outlet of type %s", o.typ)
+	}
+}
+
+// Any will send any message.
+func (o *Outlet) Any(msg string, atoms []Atom) {
+	if o.typ == Any {
+		argc, argv := encodeAtoms(atoms)
+		C.outlet_anything(o.ptr, C.maxgo_gensym(C.CString(msg)), C.short(argc), argv) // string freed by receiver
+	} else {
+		Error("any sent to outlet of type %s", o.typ)
 	}
 }
 
