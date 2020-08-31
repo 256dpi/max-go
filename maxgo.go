@@ -1,4 +1,4 @@
-package maxgo
+package max
 
 import (
 	"reflect"

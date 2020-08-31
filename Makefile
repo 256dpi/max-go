@@ -15,7 +15,7 @@ fmt:
 	clang-format  -style "{BasedOnStyle: Google, ColumnLimit: 120}" -i *.c *.h
 
 install:
-	go install ./cmd/maxgo
+	go install ./cmd/max-go
 
 build: install
 	cd example; maxgo -name maxgo -cross -install maxgo

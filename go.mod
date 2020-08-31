@@ -1,4 +1,4 @@
-module github.com/256dpi/maxgo
+module github.com/256dpi/max-go
 
 go 1.14
 

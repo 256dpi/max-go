@@ -1,8 +1,8 @@
-# maxgo
+# max-go
 
-[![GoDoc](https://godoc.org/github.com/256dpi/maxgo?status.svg)](http://godoc.org/github.com/256dpi/maxgo)
-[![Release](https://img.shields.io/github/release/256dpi/maxgo.svg)](https://github.com/256dpi/maxgo/releases)
-[![Go Report Card](https://goreportcard.com/badge/github.com/256dpi/maxgo)](https://goreportcard.com/report/github.com/256dpi/maxgo)
+[![GoDoc](https://godoc.org/github.com/256dpi/max-go?status.svg)](http://godoc.org/github.com/256dpi/max-go)
+[![Release](https://img.shields.io/github/release/256dpi/max-go.svg)](https://github.com/256dpi/max-go/releases)
+[![Go Report Card](https://goreportcard.com/badge/github.com/256dpi/max-go)](https://goreportcard.com/report/github.com/256dpi/max-go)
 
 **Toolkit for building Max externals with Go.**
 
@@ -17,8 +17,8 @@ brew install go
 Then you can install the package and CLI using Go's module management:
 
 ```sh
-go get -u github.com/256dpi/maxgo
-go get -u github.com/256dpi/maxgo/cmd/maxgo
+go get -u github.com/256dpi/max-go
+go get -u github.com/256dpi/max-go/cmd/maxgo
 ``` 
 
 This will install the `maxgo` command line utility. You may need to add Go's `bin` directory tou your `PATH` variable to access the CLI in the terminal:
@@ -40,31 +40,31 @@ Add the following file to an empty directory:
 ```go
 package main
 
-import  "github.com/256dpi/maxgo"
+import  "github.com/256dpi/max-go"
 
 type instance struct {
-	in1   *maxgo.Inlet
-	in2   *maxgo.Inlet
-	out1  *maxgo.Outlet
-	out2  *maxgo.Outlet
+	in1   *max.Inlet
+	in2   *max.Inlet
+	out1  *max.Outlet
+	out2  *max.Outlet
 }
 
-func (i *instance) Init(obj *maxgo.Object, args []maxgo.Atom) {
+func (i *instance) Init(obj *max.Object, args []max.Atom) {
 	// print to Max console
-	maxgo.Pretty("init", args)
+	max.Pretty("init", args)
 
 	// declare inlets
-	i.in1 = obj.Inlet(maxgo.Any, "example inlet 1", true)
-	i.in2 = obj.Inlet(maxgo.Float, "example inlet 2", false)
+	i.in1 = obj.Inlet(max.Any, "example inlet 1", true)
+	i.in2 = obj.Inlet(max.Float, "example inlet 2", false)
 
 	// declare outlets
-	i.out1 = obj.Outlet(maxgo.Any, "example outlet 1")
-	i.out2 = obj.Outlet(maxgo.Bang, "example outlet 2")
+	i.out1 = obj.Outlet(max.Any, "example outlet 1")
+	i.out2 = obj.Outlet(max.Bang, "example outlet 2")
 }
 
-func (i *instance) Handle(msg string, inlet int, data []maxgo.Atom) {
+func (i *instance) Handle(msg string, inlet int, data []max.Atom) {
 	// print to Max console
-	maxgo.Pretty("handle", msg, inlet, data)
+	max.Pretty("handle", msg, inlet, data)
 
 	// send to first outlet
 	i.out1.Any(msg, data)
@@ -72,12 +72,12 @@ func (i *instance) Handle(msg string, inlet int, data []maxgo.Atom) {
 
 func (i *instance) Free() {
 	// print to Max console
-	maxgo.Pretty("free")
+	max.Pretty("free")
 }
 
 func init() {
 	// initialize Max class
-	maxgo.Register("example", &instance{})
+	max.Register("example", &instance{})
 }
 
 func main() {

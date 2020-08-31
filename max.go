@@ -1,4 +1,4 @@
-package maxgo
+package max
 
 // #cgo CFLAGS: -I${SRCDIR}/lib
 // #cgo windows CFLAGS: -DWIN_VERSION=1
