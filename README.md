@@ -6,6 +6,8 @@
 
 **Toolkit for building Max externals with Go.**
 
+_Unfortunately, since Go shared libraries include a global Go runtime, only on Go based external can be loaded into Max without risking crashes due to conflicts. Akin to Max's `mxj` external for loading Java classes, the proper way would be to create a `mxg` external which loads Go binaries using the plugin interface. However, plugins are not available for Windows yet. Therefore, this toolkit should only be used when only one Go based external is loaded._ 
+
 ## Installation
 
 First you need to ensure you have recent version of [Go](https://golang.org) installed. On macOS simply install it using [brew](https://brew.sh):
