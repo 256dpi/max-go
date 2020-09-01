@@ -32,7 +32,7 @@ const (
 	Any   Type = "any"
 )
 
-func (t Type) c() C.maxgo_type_e {
+func (t Type) enum() C.maxgo_type_e {
 	switch t {
 	case Bang:
 		return C.MAXGO_BANG
@@ -249,7 +249,7 @@ func gomaxPop(ref uint64) (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *
 	// determine if there are more events
 	more := len(obj.queue) > 0
 
-	return evt.Outlet.ptr, evt.Type.c(), sym, argc, argv, more
+	return evt.Outlet.ptr, evt.Type.enum(), sym, argc, argv, more
 }
 
 //export gomaxDescribe
