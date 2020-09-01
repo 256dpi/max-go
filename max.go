@@ -60,24 +60,6 @@ type Event struct {
 	Data   []Atom
 }
 
-/* Symbols */
-
-var symbols sync.Map
-
-func gensym(str string) *C.t_symbol {
-	// check cache
-	val, ok := symbols.Load(str)
-	if ok {
-		return val.(*C.t_symbol)
-	}
-
-	// get and cache symbol
-	sym := C.maxgo_gensym(C.CString(str)) // string freed by receiver
-	symbols.Store(str, sym)
-
-	return sym
-}
-
 /* Basic */
 
 // Log will print a message to the max console.
@@ -98,6 +80,22 @@ func Alert(format string, args ...interface{}) {
 // Pretty will pretty print and log the provided values.
 func Pretty(a ...interface{}) {
 	Log(pretty.Sprint(a...))
+}
+
+var symbols sync.Map
+
+func gensym(str string) *C.t_symbol {
+	// check cache
+	val, ok := symbols.Load(str)
+	if ok {
+		return val.(*C.t_symbol)
+	}
+
+	// get and cache symbol
+	sym := C.maxgo_gensym(C.CString(str)) // string freed by receiver
+	symbols.Store(str, sym)
+
+	return sym
 }
 
 /* Classes */

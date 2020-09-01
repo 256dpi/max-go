@@ -216,7 +216,7 @@ static void bridge_free(t_bridge *bridge) {
 void maxgo_init(char *name) {
   // check class
   if (class != NULL) {
-    error("maxgo_init: has already been called");
+    error("class has already been initialized");
     return;
   }
 
