@@ -165,8 +165,8 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	return proxies, ref
 }
 
-//export gomaxMessage
-func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
+//export gomaxHandle
+func gomaxHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
 	// get object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]
@@ -252,8 +252,8 @@ func gomaxPop(ref uint64) (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *
 	return evt.Outlet.ptr, evt.Type.c(), sym, argc, argv, more
 }
 
-//export gomaxInfo
-func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
+//export gomaxDescribe
+func gomaxDescribe(ref uint64, io, i int64) (*C.char, bool) {
 	// get object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]

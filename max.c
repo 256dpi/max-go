@@ -95,7 +95,7 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   t_bridge *bridge = object_alloc(class);
 
   // initialize object
-  struct gomaxInit_return ret = gomaxInit(&bridge->obj, argc, argv);
+  struct gomaxInit_return ret = gomaxInit(&bridge->obj, argc, argv); // (int, uint64)
 
   // save number of proxies
   bridge->num_proxies = ret.r0;
@@ -126,8 +126,8 @@ static void bridge_bang(t_bridge *bridge) {
   // get inlet
   long inlet = proxy_getinlet(&bridge->obj);
 
-  // dispatch message
-  gomaxMessage(bridge->ref, "bang", inlet, 0, NULL);
+  // handle message
+  gomaxHandle(bridge->ref, "bang", inlet, 0, NULL);
 }
 
 static void bridge_int(t_bridge *bridge, long n) {
@@ -138,8 +138,8 @@ static void bridge_int(t_bridge *bridge, long n) {
   t_atom args[1] = {0};
   atom_setlong(args, n);
 
-  // dispatch message
-  gomaxMessage(bridge->ref, "int", inlet, 1, args);
+  // handle message
+  gomaxHandle(bridge->ref, "int", inlet, 1, args);
 }
 
 static void bridge_float(t_bridge *bridge, double n) {
@@ -150,31 +150,31 @@ static void bridge_float(t_bridge *bridge, double n) {
   t_atom args[1] = {0};
   atom_setfloat(args, n);
 
-  // dispatch message
-  gomaxMessage(bridge->ref, "float", inlet, 1, args);
+  // handle message
+  gomaxHandle(bridge->ref, "float", inlet, 1, args);
 }
 
 static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *argv) {
   // get inlet
   long inlet = proxy_getinlet(&bridge->obj);
 
-  // dispatch message
-  gomaxMessage(bridge->ref, msg->s_name, inlet, argc, argv);
+  // handle message
+  gomaxHandle(bridge->ref, msg->s_name, inlet, argc, argv);
 }
 
 static void bridge_dblclick(t_bridge *bridge) {
-  // dispatch message
-  gomaxMessage(bridge->ref, "dblclick", 0, 0, NULL);
+  // handle message
+  gomaxHandle(bridge->ref, "dblclick", 0, 0, NULL);
 }
 
 static void bridge_loadbang(t_bridge *bridge) {
-  // dispatch message
-  gomaxMessage(bridge->ref, "loadbang", 0, 0, NULL);
+  // handle message
+  gomaxHandle(bridge->ref, "loadbang", 0, 0, NULL);
 }
 
 static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf) {
   // get info
-  struct gomaxInfo_return ret = gomaxInfo(bridge->ref, io, i);
+  struct gomaxDescribe_return ret = gomaxDescribe(bridge->ref, io, i);  // (*C.char, bool)
 
   // copy label
   strncpy_zero(buf, ret.r0, 512);
@@ -185,7 +185,7 @@ static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf)
 
 static void bridge_inletinfo(t_bridge *bridge, void *b, long i, char *v) {
   // get info
-  struct gomaxInfo_return ret = gomaxInfo(bridge->ref, 1, i);
+  struct gomaxDescribe_return ret = gomaxDescribe(bridge->ref, 1, i);  // (*C.char, bool)
 
   // set cold if not hot
   if (!ret.r1) {
