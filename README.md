@@ -4,9 +4,7 @@
 [![Release](https://img.shields.io/github/release/256dpi/max-go.svg)](https://github.com/256dpi/max-go/releases)
 [![Go Report Card](https://goreportcard.com/badge/github.com/256dpi/max-go)](https://goreportcard.com/report/github.com/256dpi/max-go)
 
-**Toolkit for building Max externals with Go.**
-
-_Unfortunately, since Go shared libraries include a global Go runtime, only on Go based external can be loaded into Max without risking crashes due to conflicts. Akin to Max's `mxj` external for loading Java classes, the proper way would be to create a `mxg` external which loads Go binaries using the plugin interface. However, plugins are not available for Windows yet. Therefore, this toolkit should only be used when only one Go based external is loaded._ 
+**Toolkit for building Max externals with Go.** 
 
 ## Installation
 
