@@ -41,7 +41,54 @@ typedef struct {
   void **proxies;
   int num_proxies;
   unsigned long long ref;
+  void *clock;
 } t_bridge;
+
+static void bridge_tick(void *ptr) {
+  // get bridge
+  t_bridge *bridge = (t_bridge *)ptr;
+
+  // handle all queued events
+  for (;;) {
+    // retrieve next event
+    struct gomaxPop_return ret =
+        gomaxPop(bridge->ref);  // (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *C.t_atom, bool)
+
+    // check result
+    if (ret.r0 == NULL) {
+      return;
+    }
+
+    // call outlet
+    switch (ret.r1) {
+      case MAXGO_BANG:
+        outlet_bang(ret.r0);
+        break;
+      case MAXGO_INT:
+        outlet_int(ret.r0, atom_getlong(ret.r4));
+        break;
+      case MAXGO_FLOAT:
+        outlet_float(ret.r0, atom_getfloat(ret.r4));
+        break;
+      case MAXGO_LIST:
+        outlet_list(ret.r0, NULL, ret.r3, ret.r4);
+        break;
+      case MAXGO_ANY:
+        outlet_anything(ret.r0, ret.r2, ret.r3, ret.r4);
+        break;
+    }
+
+    // free atoms
+    if (ret.r4 != NULL) {
+      freebytes(ret.r4, ret.r3 * sizeof(t_atom));
+    }
+
+    // return if there are no more events
+    if (!ret.r5) {
+      return;
+    }
+  }
+}
 
 static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   // allocate bridge
@@ -68,6 +115,9 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   for (int i = 0; i < bridge->num_proxies; i++) {
     bridge->proxies[i] = proxy_new(&bridge->obj, i + 1, &bridge->inlet);
   }
+
+  // create clock
+  bridge->clock = clock_new(bridge, (method)bridge_tick);
 
   return bridge;
 }
@@ -157,6 +207,10 @@ static void bridge_free(t_bridge *bridge) {
 
   // free list
   freebytes(bridge->proxies, bridge->num_proxies * sizeof(void *));
+
+  // free clock
+  clock_unset(bridge->clock);
+  freeobject((t_object *)bridge->clock);
 }
 
 void maxgo_init(char *name) {
@@ -185,6 +239,14 @@ void maxgo_init(char *name) {
 
   // free name
   free(name);
+}
+
+void maxgo_notify(void *ptr) {
+  // get bridge
+  t_bridge *bridge = (t_bridge *)ptr;
+
+  // schedule clock
+  clock_delay(bridge->clock, 0);
 }
 
 /* Threads */

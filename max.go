@@ -32,8 +32,51 @@ const (
 	Any   Type = "any"
 )
 
+func (t Type) c() C.maxgo_type_e {
+	switch t {
+	case Bang:
+		return C.MAXGO_BANG
+	case Int:
+		return C.MAXGO_INT
+	case Float:
+		return C.MAXGO_FLOAT
+	case List:
+		return C.MAXGO_LIST
+	case Any:
+		return C.MAXGO_ANY
+	default:
+		panic("invalid type")
+	}
+}
+
 // Atom is a Max atom of type int64, float64 or string.
 type Atom = interface{}
+
+// Event describes an emitted event.
+type Event struct {
+	Outlet *Outlet
+	Type   Type
+	Msg    string
+	Data   []Atom
+}
+
+/* Symbols */
+
+var symbols sync.Map
+
+func gensym(str string) *C.t_symbol {
+	// check cache
+	val, ok := symbols.Load(str)
+	if ok {
+		return val.(*C.t_symbol)
+	}
+
+	// get and cache symbol
+	sym := C.maxgo_gensym(C.CString(str)) // string freed by receiver
+	symbols.Store(str, sym)
+
+	return sym
+}
 
 /* Basic */
 
@@ -77,7 +120,11 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	ref := atomic.AddUint64(&counter, 1)
 
 	// prepare object
-	obj := &Object{ref: ref, ptr: ptr}
+	obj := &Object{
+		ref:   ref,
+		ptr:   ptr,
+		queue: make(chan Event, 100),
+	}
 
 	// store object
 	objectsMutex.Lock()
@@ -172,6 +219,39 @@ func gomaxMessage(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_at
 	}
 }
 
+//export gomaxPop
+func gomaxPop(ref uint64) (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *C.t_atom, bool) {
+	// get object
+	objectsMutex.Lock()
+	obj, ok := objects[ref]
+	objectsMutex.Unlock()
+	if !ok {
+		return nil, 0, nil, 0, nil, false
+	}
+
+	// get event
+	var evt Event
+	select {
+	case evt = <-obj.queue:
+	default:
+		return nil, 0, nil, 0, nil, false
+	}
+
+	// encode atoms
+	argc, argv := encodeAtoms(evt.Data)
+
+	// get symbol if available
+	var sym *C.t_symbol
+	if evt.Type == Any {
+		sym = gensym(evt.Msg)
+	}
+
+	// determine if there are more events
+	more := len(obj.queue) > 0
+
+	return evt.Outlet.ptr, evt.Type.c(), sym, argc, argv, more
+}
+
 //export gomaxInfo
 func gomaxInfo(ref uint64, io, i int64) (*C.char, bool) {
 	// get object
@@ -254,10 +334,26 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, in
 // Object is single Max object.
 type Object struct {
 	sync.Mutex
-	ref uint64
-	ptr unsafe.Pointer
-	in  []*Inlet
-	out []*Outlet
+	ref   uint64
+	ptr   unsafe.Pointer
+	in    []*Inlet
+	out   []*Outlet
+	queue chan Event
+}
+
+// Push will add the provided events to the objects queue.
+func (o *Object) Push(events ...Event) {
+	// queue events
+	for _, evt := range events {
+		select {
+		case o.queue <- evt:
+		default:
+			Error("dropped event due to full queue")
+		}
+	}
+
+	// notify
+	C.maxgo_notify(o.ptr)
 }
 
 // Inlet is a single Max inlet.
@@ -313,7 +409,7 @@ func (o *Outlet) Label() string {
 // Bang will send a bang.
 func (o *Outlet) Bang() {
 	if o.typ == Bang || o.typ == Any {
-		C.outlet_bang(o.ptr)
+		o.obj.Push(Event{Outlet: o, Type: Bang})
 	} else {
 		Error("bang sent to outlet of type %s", o.typ)
 	}
@@ -322,7 +418,7 @@ func (o *Outlet) Bang() {
 // Int will send and int.
 func (o *Outlet) Int(n int64) {
 	if o.typ == Int || o.typ == Any {
-		C.outlet_int(o.ptr, C.longlong(n))
+		o.obj.Push(Event{Outlet: o, Type: Int, Data: []Atom{n}})
 	} else {
 		Error("int sent to outlet of type %s", o.typ)
 	}
@@ -331,7 +427,7 @@ func (o *Outlet) Int(n int64) {
 // Float will send a float.
 func (o *Outlet) Float(n float64) {
 	if o.typ == Float || o.typ == Any {
-		C.outlet_float(o.ptr, C.double(n))
+		o.obj.Push(Event{Outlet: o, Type: Float, Data: []Atom{n}})
 	} else {
 		Error("float sent to outlet of type %s", o.typ)
 	}
@@ -340,8 +436,7 @@ func (o *Outlet) Float(n float64) {
 // List will send a list.
 func (o *Outlet) List(atoms []Atom) {
 	if o.typ == List || o.typ == Any {
-		argc, argv := encodeAtoms(atoms)
-		C.outlet_list(o.ptr, nil, C.short(argc), argv)
+		o.obj.Push(Event{Outlet: o, Type: List, Data: atoms})
 	} else {
 		Error("list sent to outlet of type %s", o.typ)
 	}
@@ -350,8 +445,7 @@ func (o *Outlet) List(atoms []Atom) {
 // Any will send any message.
 func (o *Outlet) Any(msg string, atoms []Atom) {
 	if o.typ == Any {
-		argc, argv := encodeAtoms(atoms)
-		C.outlet_anything(o.ptr, C.maxgo_gensym(C.CString(msg)), C.short(argc), argv) // string freed by receiver
+		o.obj.Push(Event{Outlet: o, Type: Any, Msg: msg, Data: atoms})
 	} else {
 		Error("any sent to outlet of type %s", o.typ)
 	}
@@ -428,26 +522,34 @@ func decodeAtoms(argc int64, argv *C.t_atom) []Atom {
 	return atoms
 }
 
-func encodeAtoms(atoms []Atom) (argc int64, argv *C.t_atom) {
+// the receiver must arrange for the returned non-nil array to be freed
+func encodeAtoms(atoms []Atom) (int64, *C.t_atom) {
 	// check length
 	if len(atoms) == 0 {
 		return 0, nil
 	}
 
 	// allocate atom array
-	array := make([]C.t_atom, len(atoms))
+	array := (*C.t_atom)(unsafe.Pointer(C.getbytes(C.ulonglong(len(atoms) * C.sizeof_t_atom))))
+
+	// cast to slice
+	var slice []C.t_atom
+	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&slice))
+	sliceHeader.Cap = len(atoms)
+	sliceHeader.Len = len(atoms)
+	sliceHeader.Data = uintptr(unsafe.Pointer(array))
 
 	// set atoms
 	for i, atom := range atoms {
 		switch atom := atom.(type) {
 		case int64:
-			C.atom_setlong(&array[i], C.longlong(atom))
+			C.atom_setlong(&slice[i], C.longlong(atom))
 		case float64:
-			C.atom_setfloat(&array[i], C.double(atom))
+			C.atom_setfloat(&slice[i], C.double(atom))
 		case string:
-			C.atom_setsym(&array[i], C.maxgo_gensym(C.CString(atom))) // string freed by receiver
+			C.atom_setsym(&slice[i], gensym(atom))
 		}
 	}
 
-	return int64(len(atoms)), &array[0]
+	return int64(len(atoms)), array
 }
