@@ -287,6 +287,7 @@ func (i *Inlet) Label() string {
 
 // Outlet is a single MAx outlet.
 type Outlet struct {
+	obj   *Object
 	typ   Type
 	label string
 	ptr   unsafe.Pointer
@@ -294,7 +295,7 @@ type Outlet struct {
 
 // Outlet will declare an outlet.
 func (o *Object) Outlet(typ Type, label string) *Outlet {
-	outlet := &Outlet{typ: typ, label: label}
+	outlet := &Outlet{obj: o, typ: typ, label: label}
 	o.out = append(o.out, outlet)
 	return outlet
 }
