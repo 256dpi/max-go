@@ -62,9 +62,9 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) {
 	i.out2 = obj.Outlet(max.Bang, "example outlet 2")
 }
 
-func (i *instance) Handle(msg string, inlet int, data []max.Atom) {
+func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 	// print to Max console
-	max.Pretty("handle", msg, inlet, data)
+	max.Pretty("handle", inlet, msg, data)
 
 	// send to first outlet
 	i.out1.Any(msg, data)
