@@ -83,6 +83,20 @@ func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 	}
 }
 
+func (i *instance) Loaded() {
+	// check bench
+	if !i.bench {
+		max.Pretty("loaded")
+	}
+}
+
+func (i *instance) DoubleClicked() {
+	// check bench
+	if !i.bench {
+		max.Pretty("double clicked")
+	}
+}
+
 func (i *instance) Free() {
 	// check bench
 	if !i.bench {

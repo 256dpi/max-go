@@ -12,6 +12,12 @@ type Instance interface {
 	Free()
 }
 
+// AdvancedInstance is an object that responds to advanced messages.
+type AdvancedInstance interface {
+	Loaded()
+	DoubleClicked()
+}
+
 // Register will initialize the Max class using the provided instance. This
 // function must be called from the main packages init() function as the main()
 // function is never called by a Max external.
@@ -56,6 +62,19 @@ func Register(name string, prototype Instance) {
 
 		// return if nil
 		if instance == nil {
+			return
+		}
+
+		// handle loadbang and dblclick
+		if msg == "loadbang" || msg == "dblclick" {
+			if adv, ok := instance.(AdvancedInstance); ok {
+				switch msg {
+				case "loadbang":
+					adv.Loaded()
+				case "dblclick":
+					adv.DoubleClicked()
+				}
+			}
 			return
 		}
 

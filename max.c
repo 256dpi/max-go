@@ -160,14 +160,14 @@ static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *arg
   maxgoHandle(bridge->ref, msg->s_name, inlet, argc, argv);
 }
 
-static void bridge_dblclick(t_bridge *bridge) {
-  // handle message
-  maxgoHandle(bridge->ref, "dblclick", 0, 0, NULL);
-}
-
 static void bridge_loadbang(t_bridge *bridge) {
   // handle message
   maxgoHandle(bridge->ref, "loadbang", 0, 0, NULL);
+}
+
+static void bridge_dblclick(t_bridge *bridge) {
+  // handle message
+  maxgoHandle(bridge->ref, "dblclick", 0, 0, NULL);
 }
 
 static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf) {
@@ -227,8 +227,8 @@ void maxgo_init(char *name) {
   class_addmethod(class, (method)bridge_float, "float", A_FLOAT, 0);
   class_addmethod(class, (method)bridge_gimme, "list", A_GIMME, 0);
   class_addmethod(class, (method)bridge_gimme, "anything", A_GIMME, 0);
-  class_addmethod(class, (method)bridge_dblclick, "dblclick", A_CANT, 0);
-  class_addmethod(class, (method)bridge_loadbang, "loadbang", A_CANT, 0);
+  class_addmethod(class, (method)bridge_loadbang, "loadbang", 0);
+  class_addmethod(class, (method)bridge_dblclick, "dblclick", 0);
   class_addmethod(class, (method)bridge_assist, "assist", A_CANT, 0);
   class_addmethod(class, (method)bridge_inletinfo, "inletinfo", A_CANT, 0);
 
