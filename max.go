@@ -99,13 +99,67 @@ func gensym(str string) *C.t_symbol {
 	return sym
 }
 
-/* Classes */
-
-var counter uint64
+/* Initialization */
 
 var initCallback func(*Object, []Atom) bool
 var handlerCallback func(*Object, int, string, []Atom)
 var freeCallback func(*Object)
+
+var initMutex sync.Mutex
+var initDone = make(chan struct{})
+
+//export maxgoMain
+func maxgoMain() {
+	// await initialization of globals
+	for initDone == nil {
+		time.Sleep(time.Millisecond)
+	}
+
+	// await class initialization
+	select {
+	case <-initDone:
+		// ok
+	case <-time.After(time.Second):
+		panic("not initialized in time")
+	}
+}
+
+// Init will initialize the Max class with the specified name using the provided
+// callbacks to initialize and free objects. This function must be called from
+// the main packages init() function as the main() function is never called by a
+// Max external.
+//
+// The provided callbacks are called to initialize and object, handle messages
+// and free the object when it is not used anymore. The callbacks are usually
+// called on the Max main thread. However, the handler may be called from and
+// unknown thread in parallel to the other callbacks.
+func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, int, string, []Atom), free func(*Object)) {
+	// ensure mutex
+	initMutex.Lock()
+	defer initMutex.Unlock()
+
+	// check flag
+	select {
+	case <-initDone:
+		panic("already initialized")
+	default:
+	}
+
+	// set callbacks
+	initCallback = init
+	handlerCallback = handler
+	freeCallback = free
+
+	// initialize
+	C.maxgo_init(C.CString(name)) // string freed by receiver
+
+	// set flag
+	close(initDone)
+}
+
+/* Classes */
+
+var counter uint64
 
 var objects = map[uint64]*Object{}
 var objectsMutex sync.Mutex
@@ -292,60 +346,6 @@ func maxgoFree(ref uint64) {
 	if freeCallback != nil {
 		freeCallback(obj)
 	}
-}
-
-/* Initialization */
-
-var initMutex sync.Mutex
-var initDone = make(chan struct{})
-
-//export maxgoMain
-func maxgoMain() {
-	// await initialization of globals
-	for initDone == nil {
-		time.Sleep(time.Millisecond)
-	}
-
-	// await class initialization
-	select {
-	case <-initDone:
-		// ok
-	case <-time.After(time.Second):
-		panic("not initialized in time")
-	}
-}
-
-// Init will initialize the Max class with the specified name using the provided
-// callbacks to initialize and free objects. This function must be called from
-// the main packages init() function as the main() function is never called by a
-// Max external.
-//
-// The provided callbacks are called to initialize and object, handle messages
-// and free the object when it is not used anymore. The callbacks are usually
-// called on the Max main thread. However, the handler may be called from and
-// unknown thread in parallel to the other callbacks.
-func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, int, string, []Atom), free func(*Object)) {
-	// ensure mutex
-	initMutex.Lock()
-	defer initMutex.Unlock()
-
-	// check flag
-	select {
-	case <-initDone:
-		panic("already initialized")
-	default:
-	}
-
-	// set callbacks
-	initCallback = init
-	handlerCallback = handler
-	freeCallback = free
-
-	// initialize
-	C.maxgo_init(C.CString(name)) // string freed by receiver
-
-	// set flag
-	close(initDone)
 }
 
 /* Objects */

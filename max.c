@@ -2,10 +2,6 @@
 
 #include "max.h"
 
-/* Main */
-
-extern void ext_main(void *r) { maxgoMain(); }
-
 /* Basic */
 
 void maxgo_log(char *str) {
@@ -28,6 +24,10 @@ t_symbol *maxgo_gensym(char *str) {
   free(str);
   return sym;
 }
+
+/* Initialization */
+
+extern void ext_main(void *r) { maxgoMain(); }
 
 /* Classes */
 
