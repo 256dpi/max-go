@@ -51,8 +51,8 @@ static void bridge_tick(void *ptr) {
   // handle all queued events
   for (;;) {
     // retrieve next event
-    struct gomaxPop_return ret =
-        gomaxPop(bridge->ref);  // (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *C.t_atom, bool)
+    struct maxgoPop_return ret =
+        maxgoPop(bridge->ref);  // (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *C.t_atom, bool)
 
     // check result
     if (ret.r0 == NULL) {
@@ -95,7 +95,7 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   t_bridge *bridge = object_alloc(class);
 
   // initialize object
-  struct gomaxInit_return ret = gomaxInit(&bridge->obj, argc, argv); // (int, uint64)
+  struct maxgoInit_return ret = maxgoInit(&bridge->obj, argc, argv); // (int, uint64)
 
   // save number of proxies
   bridge->num_proxies = ret.r0;
@@ -127,7 +127,7 @@ static void bridge_bang(t_bridge *bridge) {
   long inlet = proxy_getinlet(&bridge->obj);
 
   // handle message
-  gomaxHandle(bridge->ref, "bang", inlet, 0, NULL);
+  maxgoHandle(bridge->ref, "bang", inlet, 0, NULL);
 }
 
 static void bridge_int(t_bridge *bridge, long n) {
@@ -139,7 +139,7 @@ static void bridge_int(t_bridge *bridge, long n) {
   atom_setlong(args, n);
 
   // handle message
-  gomaxHandle(bridge->ref, "int", inlet, 1, args);
+  maxgoHandle(bridge->ref, "int", inlet, 1, args);
 }
 
 static void bridge_float(t_bridge *bridge, double n) {
@@ -151,7 +151,7 @@ static void bridge_float(t_bridge *bridge, double n) {
   atom_setfloat(args, n);
 
   // handle message
-  gomaxHandle(bridge->ref, "float", inlet, 1, args);
+  maxgoHandle(bridge->ref, "float", inlet, 1, args);
 }
 
 static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *argv) {
@@ -159,22 +159,22 @@ static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *arg
   long inlet = proxy_getinlet(&bridge->obj);
 
   // handle message
-  gomaxHandle(bridge->ref, msg->s_name, inlet, argc, argv);
+  maxgoHandle(bridge->ref, msg->s_name, inlet, argc, argv);
 }
 
 static void bridge_dblclick(t_bridge *bridge) {
   // handle message
-  gomaxHandle(bridge->ref, "dblclick", 0, 0, NULL);
+  maxgoHandle(bridge->ref, "dblclick", 0, 0, NULL);
 }
 
 static void bridge_loadbang(t_bridge *bridge) {
   // handle message
-  gomaxHandle(bridge->ref, "loadbang", 0, 0, NULL);
+  maxgoHandle(bridge->ref, "loadbang", 0, 0, NULL);
 }
 
 static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf) {
   // get info
-  struct gomaxDescribe_return ret = gomaxDescribe(bridge->ref, io, i);  // (*C.char, bool)
+  struct maxgoDescribe_return ret = maxgoDescribe(bridge->ref, io, i);  // (*C.char, bool)
 
   // copy label
   strncpy_zero(buf, ret.r0, 512);
@@ -185,7 +185,7 @@ static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf)
 
 static void bridge_inletinfo(t_bridge *bridge, void *b, long i, char *v) {
   // get info
-  struct gomaxDescribe_return ret = gomaxDescribe(bridge->ref, 1, i);  // (*C.char, bool)
+  struct maxgoDescribe_return ret = maxgoDescribe(bridge->ref, 1, i);  // (*C.char, bool)
 
   // set cold if not hot
   if (!ret.r1) {
@@ -198,7 +198,7 @@ static void bridge_inletinfo(t_bridge *bridge, void *b, long i, char *v) {
 
 static void bridge_free(t_bridge *bridge) {
   // free object
-  gomaxFree(bridge->ref);
+  maxgoFree(bridge->ref);
 
   // free proxies
   for (int i = 0; i < bridge->num_proxies; i++) {
@@ -253,7 +253,7 @@ void maxgo_notify(void *ptr) {
 
 void maxgo_yield(void *p, void *ref) {
   // yield back
-  gomaxYield((unsigned long long)ref);
+  maxgoYield((unsigned long long)ref);
 }
 
 void maxgo_defer(unsigned long long ref) {

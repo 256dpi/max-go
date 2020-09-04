@@ -109,8 +109,8 @@ var freeCallback func(*Object)
 var objects = map[uint64]*Object{}
 var objectsMutex sync.Mutex
 
-//export gomaxInit
-func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
+//export maxgoInit
+func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
@@ -163,8 +163,8 @@ func gomaxInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 	return proxies, ref
 }
 
-//export gomaxHandle
-func gomaxHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
+//export maxgoHandle
+func maxgoHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_atom) {
 	// get object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]
@@ -217,8 +217,8 @@ func gomaxHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_ato
 	}
 }
 
-//export gomaxPop
-func gomaxPop(ref uint64) (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *C.t_atom, bool) {
+//export maxgoPop
+func maxgoPop(ref uint64) (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *C.t_atom, bool) {
 	// get object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]
@@ -250,8 +250,8 @@ func gomaxPop(ref uint64) (unsafe.Pointer, C.maxgo_type_e, *C.t_symbol, int64, *
 	return evt.Outlet.ptr, evt.Type.enum(), sym, argc, argv, more
 }
 
-//export gomaxDescribe
-func gomaxDescribe(ref uint64, io, i int64) (*C.char, bool) {
+//export maxgoDescribe
+func maxgoDescribe(ref uint64, io, i int64) (*C.char, bool) {
 	// get object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]
@@ -276,8 +276,8 @@ func gomaxDescribe(ref uint64, io, i int64) (*C.char, bool) {
 	return nil, false
 }
 
-//export gomaxFree
-func gomaxFree(ref uint64) {
+//export maxgoFree
+func maxgoFree(ref uint64) {
 	// get and delete object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]
@@ -459,8 +459,8 @@ func IsMainThread() bool {
 	return C.systhread_ismainthread() == 1
 }
 
-//export gomaxYield
-func gomaxYield(ref uint64) {
+//export maxgoYield
+func maxgoYield(ref uint64) {
 	// get function
 	queueMutex.Lock()
 	fn := queue[ref]
