@@ -20,9 +20,9 @@ type AdvancedInstance interface {
 
 // Register will initialize the Max class using the provided instance. This
 // function must be called from the main packages init() function as the main()
-// function is never called by a Max external.
-//
-// The callbacks on the instance are never called in parallel.
+// function is never called by a Max external. The instance methods are usually
+// called on the Max main thread. However, the handler may be called from an
+// unknown thread in parallel to the other callbacks.
 func Register(name string, prototype Instance) {
 	// create mutex
 	var mutex sync.Mutex
@@ -39,11 +39,7 @@ func Register(name string, prototype Instance) {
 		instance := reflect.New(typ).Interface().(Instance)
 
 		// call init
-		obj.Lock()
 		ok := instance.Init(obj, args)
-		obj.Unlock()
-
-		// return if not ok
 		if !ok {
 			return false
 		}
@@ -79,9 +75,7 @@ func Register(name string, prototype Instance) {
 		}
 
 		// handle message
-		obj.Lock()
 		instance.Handle(inlet, msg, atoms)
-		obj.Unlock()
 	}, func(obj *Object) {
 		// get and delete instance
 		mutex.Lock()
@@ -95,8 +89,6 @@ func Register(name string, prototype Instance) {
 		}
 
 		// call free
-		obj.Lock()
 		instance.Free()
-		obj.Unlock()
 	})
 }

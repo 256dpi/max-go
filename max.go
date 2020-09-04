@@ -134,7 +134,7 @@ func maxgoMain() {
 //
 // The provided callbacks are called to initialize and object, handle messages
 // and free the object when it is not used anymore. The callbacks are usually
-// called on the Max main thread. However, the handler may be called from and
+// called on the Max main thread. However, the handler may be called from an
 // unknown thread in parallel to the other callbacks.
 func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, int, string, []Atom), free func(*Object)) {
 	// ensure mutex
@@ -355,7 +355,6 @@ func maxgoFree(ref uint64) {
 
 // Object is single Max object.
 type Object struct {
-	sync.Mutex
 	ref   uint64
 	ptr   unsafe.Pointer
 	in    []*Inlet
