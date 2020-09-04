@@ -9,6 +9,7 @@ import (
 type instance struct {
 	in1   *max.Inlet
 	in2   *max.Inlet
+	in3   *max.Inlet
 	out1  *max.Outlet
 	out2  *max.Outlet
 	out3  *max.Outlet
@@ -35,6 +36,7 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 	// declare inlets
 	i.in1 = obj.Inlet(max.Any, "example inlet 1", true)
 	i.in2 = obj.Inlet(max.Float, "example inlet 2", false)
+	i.in3 = obj.Inlet(max.Int, "example inlet 3", false)
 
 	// declare outlets
 	i.out1 = obj.Outlet(max.Any, "example outlet 1")
@@ -80,6 +82,8 @@ func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 		i.out1.Any(msg, data)
 	case 1:
 		i.out2.Float(data[0].(float64) * 2)
+	case 2:
+		i.out2.Float(float64(data[0].(int64) * 3))
 	}
 }
 
