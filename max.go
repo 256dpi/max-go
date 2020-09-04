@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"sync"
 	"sync/atomic"
+	"time"
 	"unsafe"
 
 	"github.com/kr/pretty"
@@ -293,8 +294,26 @@ func maxgoFree(ref uint64) {
 	}
 }
 
+/* Initialization */
+
 var initMutex sync.Mutex
-var initDone bool
+var initDone = make(chan struct{})
+
+//export maxgoMain
+func maxgoMain() {
+	// await initialization of globals
+	for initDone == nil {
+		time.Sleep(time.Millisecond)
+	}
+
+	// await class initialization
+	select {
+	case <-initDone:
+		// ok
+	case <-time.After(time.Second):
+		panic("not initialized in time")
+	}
+}
 
 // Init will initialize the Max class with the specified name using the provided
 // callbacks to initialize and free objects. This function must be called from
@@ -311,8 +330,10 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, in
 	defer initMutex.Unlock()
 
 	// check flag
-	if initDone {
+	select {
+	case <-initDone:
 		panic("already initialized")
+	default:
 	}
 
 	// set callbacks
@@ -324,7 +345,7 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, in
 	C.maxgo_init(C.CString(name)) // string freed by receiver
 
 	// set flag
-	initDone = true
+	close(initDone)
 }
 
 /* Objects */
