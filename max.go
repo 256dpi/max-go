@@ -110,7 +110,7 @@ var objects = map[uint64]*Object{}
 var objectsMutex sync.Mutex
 
 //export maxgoInit
-func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
+func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (uint64, int) {
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
@@ -160,7 +160,7 @@ func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (int, uint64) {
 		}
 	}
 
-	return proxies, ref
+	return ref, proxies
 }
 
 //export maxgoHandle

@@ -95,18 +95,18 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   t_bridge *bridge = object_alloc(class);
 
   // initialize object
-  struct maxgoInit_return ret = maxgoInit(&bridge->obj, argc, argv); // (int, uint64)
-
-  // save number of proxies
-  bridge->num_proxies = ret.r0;
+  struct maxgoInit_return ret = maxgoInit(&bridge->obj, argc, argv);  // (uint64, int)
 
   // set reference
-  bridge->ref = ret.r1;
+  bridge->ref = ret.r0;
 
   // check reference
   if (bridge->ref == 0) {
     return NULL;
   }
+
+  // save number of proxies
+  bridge->num_proxies = ret.r1;
 
   // allocate proxy list
   bridge->proxies = (void **)getbytes(bridge->num_proxies * sizeof(void *));
