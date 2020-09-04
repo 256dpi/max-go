@@ -122,6 +122,9 @@ func maxgoMain() {
 	case <-time.After(time.Second):
 		panic("not initialized in time")
 	}
+
+	// sleep to ensure other things have loaded
+	time.Sleep(100 * time.Millisecond)
 }
 
 // Init will initialize the Max class with the specified name using the provided
