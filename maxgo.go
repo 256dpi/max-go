@@ -19,10 +19,9 @@ type AdvancedInstance interface {
 }
 
 // Register will initialize the Max class using the provided instance. This
-// function must be called from the main packages init() function as the main()
-// function is never called by a Max external. The instance methods are usually
-// called on the Max main thread. However, the handler may be called from an
-// unknown thread in parallel to the other callbacks.
+// function must be called from the main packages main() function. The instance
+// methods are usually called on the Max main thread. However, the handler may
+// be called from an unknown thread in parallel to the other callbacks.
 func Register(name string, prototype Instance) {
 	// create mutex
 	var mutex sync.Mutex

@@ -13,7 +13,6 @@ import (
 	"reflect"
 	"sync"
 	"sync/atomic"
-	"time"
 	"unsafe"
 
 	"github.com/kr/pretty"
@@ -106,31 +105,29 @@ var handlerCallback func(*Object, int, string, []Atom)
 var freeCallback func(*Object)
 
 var initMutex sync.Mutex
-var initDone = make(chan struct{})
+var initDone bool
+
+//go:linkname mainMain main.main
+func mainMain()
 
 //export maxgoMain
 func maxgoMain() {
-	// await initialization of globals
-	for initDone == nil {
-		time.Sleep(time.Millisecond)
-	}
+	// call main
+	mainMain()
 
-	// await class initialization
-	select {
-	case <-initDone:
-		// ok
-	case <-time.After(time.Second):
-		panic("not initialized in time")
-	}
+	// acquire mutex
+	initMutex.Lock()
+	defer initMutex.Unlock()
 
-	// sleep to ensure other things have loaded
-	time.Sleep(100 * time.Millisecond)
+	// check flag
+	if !initDone {
+		panic("not initialized")
+	}
 }
 
 // Init will initialize the Max class with the specified name using the provided
 // callbacks to initialize and free objects. This function must be called from
-// the main packages init() function as the main() function is never called by a
-// Max external.
+// the main packages main() function.
 //
 // The provided callbacks are called to initialize and object, handle messages
 // and free the object when it is not used anymore. The callbacks are usually
@@ -142,10 +139,8 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, in
 	defer initMutex.Unlock()
 
 	// check flag
-	select {
-	case <-initDone:
+	if initDone {
 		panic("already initialized")
-	default:
 	}
 
 	// set callbacks
@@ -157,7 +152,7 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, in
 	C.maxgo_init(C.CString(name)) // string freed by receiver
 
 	// set flag
-	close(initDone)
+	initDone = true
 }
 
 /* Classes */

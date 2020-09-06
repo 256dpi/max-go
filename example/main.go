@@ -111,11 +111,7 @@ func (i *instance) Free() {
 	}
 }
 
-func init() {
+func main() {
 	// initialize Max class
 	max.Register("maxgo", &instance{})
-}
-
-func main() {
-	// not called
 }
