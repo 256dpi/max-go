@@ -9,7 +9,6 @@ import (
 type Instance interface {
 	Init(obj *Object, args []Atom) bool
 	Handle(inlet int, msg string, data []Atom)
-	Process(input, output []float64)
 	Free()
 }
 
@@ -17,6 +16,11 @@ type Instance interface {
 type AdvancedInstance interface {
 	Loaded()
 	DoubleClicked()
+}
+
+// ProcessingInstance is an object that can processes audio.
+type ProcessingInstance interface {
+	Process(input, output []float64)
 }
 
 // Register will initialize the Max class using the provided instance. This
@@ -88,7 +92,9 @@ func Register(name string, prototype Instance) {
 		}
 
 		// process audio
-		instance.Process(input, output)
+		if pro, ok := instance.(ProcessingInstance); ok {
+			pro.Process(input, output)
+		}
 	}, func(obj *Object) {
 		// get and delete instance
 		mutex.Lock()
