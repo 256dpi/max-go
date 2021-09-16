@@ -35,10 +35,10 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 	}
 
 	// declare inlets
-	i.in1 = obj.Inlet(max.Any, "example inlet 1", true)
-	i.in2 = obj.Inlet(max.Float, "example inlet 2", false)
-	i.in3 = obj.Inlet(max.Int, "example inlet 3", false)
-	i.in4 = obj.Inlet(max.Signal, "example inlet 4", false)
+	i.in1 = obj.Inlet(max.Signal, "example inlet 1", false)
+	i.in2 = obj.Inlet(max.Any, "example inlet 2", true)
+	i.in3 = obj.Inlet(max.Float, "example inlet 3", false)
+	i.in4 = obj.Inlet(max.Int, "example inlet 4", false)
 
 	// declare outlets
 	i.out1 = obj.Outlet(max.Any, "example outlet 1")
@@ -81,10 +81,12 @@ func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 	// echo or double
 	switch inlet {
 	case 0:
-		i.out1.Any(msg, data)
+		// signal
 	case 1:
-		i.out2.Float(data[0].(float64) * 2)
+		i.out1.Any(msg, data)
 	case 2:
+		i.out2.Float(data[0].(float64) * 2)
+	case 3:
 		i.out2.Float(float64(data[0].(int64) * 3))
 	}
 }

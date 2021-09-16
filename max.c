@@ -123,7 +123,7 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
 
   // create proxies
   for (int i = 0; i < bridge->num_proxies; i++) {
-    bridge->proxies[i] = proxy_new(&bridge->obj, bridge->num_signals + bridge->num_proxies - i, &bridge->inlet);
+    bridge->proxies[i] = proxy_new(&bridge->obj, bridge->num_proxies - i, &bridge->inlet);
   }
 
   // create clock

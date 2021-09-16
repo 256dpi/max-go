@@ -455,8 +455,17 @@ type Inlet struct {
 // Inlet will declare an inlet. If no inlets are added to an object it will have
 // a default inlet to receive messages.
 func (o *Object) Inlet(typ Type, label string, hot bool) *Inlet {
+	// check signal
+	if typ == Signal && len(o.in) > 0 {
+		panic("signal only supported as the first inlet")
+	}
+
+	// create inlet
 	inlet := &Inlet{typ: typ, label: label, hot: hot}
+
+	// store inlet
 	o.in = append(o.in, inlet)
+
 	return inlet
 }
 
@@ -480,8 +489,12 @@ type Outlet struct {
 
 // Outlet will declare an outlet.
 func (o *Object) Outlet(typ Type, label string) *Outlet {
+	// create outlet
 	outlet := &Outlet{obj: o, typ: typ, label: label}
+
+	// store outlet
 	o.out = append(o.out, outlet)
+
 	return outlet
 }
 
