@@ -3,9 +3,10 @@
 lib:
 	rm -rf ./lib
 	rm -rf ./sdk
-	git clone https://github.com/Cycling74/max-sdk.git sdk
-	mkdir lib
-	cp -r sdk/source/c74support/max-includes/ ./lib/
+	git clone https://github.com/Cycling74/max-sdk-base.git sdk
+	mkdir -p lib/max lib/msp
+	cp -r sdk/c74support/max-includes/ ./lib/max
+	cp -r sdk/c74support/msp-includes/ ./lib/msp
 	rm -rf sdk
 
 fmt:

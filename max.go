@@ -1,10 +1,10 @@
 package max
 
-// #cgo CFLAGS: -I${SRCDIR}/lib
+// #cgo CFLAGS: -I${SRCDIR}/lib/max -I${SRCDIR}/lib/msp
 // #cgo windows CFLAGS: -DWIN_VERSION=1
 // #cgo darwin CFLAGS: -DMAC_VERSION=1
 // #cgo darwin LDFLAGS: -Wl,-undefined,dynamic_lookup
-// #cgo windows LDFLAGS: -L${SRCDIR}/lib/x64 -lMaxAPI
+// #cgo windows LDFLAGS: -L${SRCDIR}/lib/max/x64 -L${SRCDIR}/lib/msp/x64 -lMaxAPI -lMaxAudio
 // #include "max.h"
 import "C"
 
@@ -546,7 +546,7 @@ func encodeAtoms(atoms []Atom) (int64, *C.t_atom) {
 	}
 
 	// allocate atom array
-	array := (*C.t_atom)(unsafe.Pointer(C.getbytes(C.ulonglong(len(atoms) * C.sizeof_t_atom))))
+	array := (*C.t_atom)(unsafe.Pointer(C.getbytes(C.t_getbytes_size(len(atoms) * C.sizeof_t_atom))))
 
 	// cast to slice
 	var slice []C.t_atom
@@ -559,7 +559,7 @@ func encodeAtoms(atoms []Atom) (int64, *C.t_atom) {
 	for i, atom := range atoms {
 		switch atom := atom.(type) {
 		case int64:
-			C.atom_setlong(&slice[i], C.longlong(atom))
+			C.atom_setlong(&slice[i], C.t_atom_long(atom))
 		case float64:
 			C.atom_setfloat(&slice[i], C.double(atom))
 		case string:
