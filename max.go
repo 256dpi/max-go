@@ -265,6 +265,12 @@ func maxgoHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_ato
 	// get name
 	name := C.GoString(msg)
 
+	// check signal
+	if in.typ == Signal {
+		Error("message received on signal inlet %d", inlet)
+		return
+	}
+
 	// check name
 	if in.typ != Any && Type(name) != in.typ {
 		Error("invalid message received on inlet %d", inlet)
