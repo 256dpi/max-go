@@ -258,44 +258,47 @@ func maxgoHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_ato
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
-	// get inlet
-	in := obj.in[inlet]
-	if in == nil {
-		return
-	}
-
 	// get name
 	name := C.GoString(msg)
 
-	// check signal
-	if in.typ == Signal {
-		Error("message received on signal inlet %d", inlet)
-		return
-	}
-
-	// check name
-	if in.typ != Any && Type(name) != in.typ {
-		Error("invalid message received on inlet %d", inlet)
-		return
-	}
-
-	// check atoms
-	if in.typ == Bang && len(atoms) != 0 || (in.typ == Int || in.typ == Float) && len(atoms) != 1 {
-		Error("unexpected input received on inlet %d", inlet)
-		return
-	}
-
-	// check types
-	switch in.typ {
-	case Int:
-		if _, ok := atoms[0].(int64); !ok {
-			Error("invalid input received on inlet %d", inlet)
+	// check inlet
+	if inlet >= 0 {
+		// get inlet
+		in := obj.in[inlet]
+		if in == nil {
 			return
 		}
-	case Float:
-		if _, ok := atoms[0].(float64); !ok {
-			Error("invalid input received on inlet %d", inlet)
+
+		// check signal
+		if in.typ == Signal {
+			Error("message received on signal inlet %d", inlet)
 			return
+		}
+
+		// check name
+		if in.typ != Any && Type(name) != in.typ {
+			Error("invalid message received on inlet %d", inlet)
+			return
+		}
+
+		// check atoms
+		if in.typ == Bang && len(atoms) != 0 || (in.typ == Int || in.typ == Float) && len(atoms) != 1 {
+			Error("unexpected input received on inlet %d", inlet)
+			return
+		}
+
+		// check types
+		switch in.typ {
+		case Int:
+			if _, ok := atoms[0].(int64); !ok {
+				Error("invalid input received on inlet %d", inlet)
+				return
+			}
+		case Float:
+			if _, ok := atoms[0].(float64); !ok {
+				Error("invalid input received on inlet %d", inlet)
+				return
+			}
 		}
 	}
 

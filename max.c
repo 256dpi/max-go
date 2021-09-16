@@ -190,12 +190,12 @@ static void bridge_dsp(t_bridge *bridge, t_object *dsp64, short *count, double s
 
 static void bridge_loadbang(t_bridge *bridge) {
   // handle message
-  maxgoHandle(bridge->ref, "loadbang", 0, 0, NULL);
+  maxgoHandle(bridge->ref, "loadbang", -1, 0, NULL);
 }
 
 static void bridge_dblclick(t_bridge *bridge) {
   // handle message
-  maxgoHandle(bridge->ref, "dblclick", 0, 0, NULL);
+  maxgoHandle(bridge->ref, "dblclick", -1, 0, NULL);
 }
 
 static void bridge_assist(t_bridge *bridge, void *b, long io, long i, char *buf) {
