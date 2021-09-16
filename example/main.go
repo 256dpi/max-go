@@ -14,6 +14,7 @@ type instance struct {
 	out1  *max.Outlet
 	out2  *max.Outlet
 	out3  *max.Outlet
+	out4  *max.Outlet
 	tick  *time.Ticker
 	bench bool
 }
@@ -41,9 +42,10 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 	i.in4 = obj.Inlet(max.Int, "example inlet 4", false)
 
 	// declare outlets
-	i.out1 = obj.Outlet(max.Any, "example outlet 1")
-	i.out2 = obj.Outlet(max.Float, "example outlet 2")
-	i.out3 = obj.Outlet(max.Bang, "example outlet 3")
+	i.out1 = obj.Outlet(max.Signal, "example outlet 4")
+	i.out2 = obj.Outlet(max.Any, "example outlet 1")
+	i.out3 = obj.Outlet(max.Float, "example outlet 2")
+	i.out4 = obj.Outlet(max.Bang, "example outlet 3")
 
 	// bang second outlet from a timer
 	if !i.bench {
@@ -58,11 +60,11 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 
 				// bang immediately or defer
 				if j++; j%2 == 0 {
-					i.out3.Bang()
+					i.out4.Bang()
 				} else {
 					max.Defer(func() {
 						max.Pretty("defer", max.IsMainThread())
-						i.out3.Bang()
+						i.out4.Bang()
 					})
 				}
 			}
@@ -83,21 +85,17 @@ func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 	case 0:
 		// signal
 	case 1:
-		i.out1.Any(msg, data)
+		i.out2.Any(msg, data)
 	case 2:
-		i.out2.Float(data[0].(float64) * 2)
+		i.out3.Float(data[0].(float64) * 2)
 	case 3:
-		i.out2.Float(float64(data[0].(int64) * 3))
+		i.out3.Float(float64(data[0].(int64) * 3))
 	}
 }
 
-var c int
-
-func (i *instance) Process(in, out [][]float64) {
-	c++
-	if c%20 == 0 {
-		max.Pretty("process", in, out)
-	}
+func (i *instance) Process(input, output []float64) {
+	// copy data
+	copy(output, input)
 }
 
 func (i *instance) Loaded() {

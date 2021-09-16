@@ -10,7 +10,7 @@
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 455.0, 335.0, 947.0, 686.0 ],
+		"rect" : [ 1135.0, 520.0, 947.0, 686.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -45,7 +45,7 @@
 					"maxclass" : "ezdac~",
 					"numinlets" : 2,
 					"numoutlets" : 0,
-					"patching_rect" : [ 66.0, 345.0, 44.0, 44.0 ],
+					"patching_rect" : [ 75.937888145446777, 402.14285683631897, 44.0, 44.0 ],
 					"prototypename" : "helpfile"
 				}
 
@@ -55,10 +55,10 @@
 					"id" : "obj-17",
 					"maxclass" : "newobj",
 					"numinlets" : 2,
-					"numoutlets" : 2,
-					"outlettype" : [ "signal", "bang" ],
-					"patching_rect" : [ 76.0, 282.0, 34.0, 22.0 ],
-					"text" : "line~"
+					"numoutlets" : 1,
+					"outlettype" : [ "signal" ],
+					"patching_rect" : [ 76.0, 282.0, 66.0, 22.0 ],
+					"text" : "cycle~ 440"
 				}
 
 			}
@@ -119,7 +119,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 225.0, 367.0, 288.0, 22.0 ],
-					"text" : "67"
+					"text" : "signal"
 				}
 
 			}
@@ -249,8 +249,8 @@
 					"id" : "obj-1",
 					"maxclass" : "newobj",
 					"numinlets" : 4,
-					"numoutlets" : 3,
-					"outlettype" : [ "", "float", "bang" ],
+					"numoutlets" : 4,
+					"outlettype" : [ "signal", "", "float", "bang" ],
 					"patching_rect" : [ 165.0, 300.0, 91.0, 22.0 ],
 					"text" : "maxgo foo 1.23"
 				}
@@ -259,7 +259,23 @@
  ],
 		"lines" : [ 			{
 				"patchline" : 				{
-					"destination" : [ "obj-13", 1 ],
+					"destination" : [ "obj-13", 0 ],
+					"order" : 0,
+					"source" : [ "obj-1", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-14", 0 ],
+					"order" : 1,
+					"source" : [ "obj-1", 1 ]
+				}
+
+			}
+, 			{
+				"patchline" : 				{
+					"destination" : [ "obj-18", 1 ],
 					"order" : 0,
 					"source" : [ "obj-1", 0 ]
 				}
@@ -267,7 +283,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-14", 0 ],
+					"destination" : [ "obj-18", 0 ],
 					"order" : 1,
 					"source" : [ "obj-1", 0 ]
 				}

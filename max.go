@@ -110,7 +110,7 @@ type InitCallback func(obj *Object, atoms []Atom) bool
 type HandleCallback func(obj *Object, inlet int, name string, atoms []Atom)
 
 // ProcessCallback is called to process audio.
-type ProcessCallback func(obj *Object, input, output [][]float64)
+type ProcessCallback func(obj *Object, input, output []float64)
 
 // FreeCallback is called to free objects.
 type FreeCallback func(obj *Object)
@@ -234,7 +234,9 @@ func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (uint64, int, int
 		case Any:
 			outlet.ptr = C.outlet_new(obj.ptr, nil)
 		case Signal:
-			panic("signal outlet not supported yet")
+			str := C.CString("signal")
+			outlet.ptr = C.outlet_new(obj.ptr, str)
+			C.free(unsafe.Pointer(str))
 		default:
 			panic("invalid outlet type")
 		}
@@ -304,7 +306,7 @@ func maxgoHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_ato
 }
 
 //export maxgoProcess
-func maxgoProcess(ref uint64, ins, outs **C.double, numIns, numOuts, samples C.long) {
+func maxgoProcess(ref uint64, in, out *C.double, samples C.long) {
 	// get object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]
@@ -314,27 +316,25 @@ func maxgoProcess(ref uint64, ins, outs **C.double, numIns, numOuts, samples C.l
 	}
 
 	// prepare input and output
-	input := make([][]float64, int(numIns))
-	output := make([][]float64, int(numOuts))
+	var input []float64
+	var output []float64
 
-	// convert inputs
-	for i := 0; i < int(numIns); i++ {
-		var slice []float64
-		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&slice))
+	// convert input
+	if in != nil {
+		input = []float64{}
+		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&input))
 		sliceHeader.Cap = int(samples)
 		sliceHeader.Len = int(samples)
-		sliceHeader.Data = uintptr(unsafe.Pointer(ins)) + 1
-		input[i] = slice
+		sliceHeader.Data = uintptr(unsafe.Pointer(in))
 	}
 
-	// convert outputs
-	for i := 0; i < int(numOuts); i++ {
-		var slice []float64
-		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&slice))
+	// convert output
+	if out != nil {
+		output = []float64{}
+		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&output))
 		sliceHeader.Cap = int(samples)
 		sliceHeader.Len = int(samples)
-		sliceHeader.Data = uintptr(unsafe.Pointer(outs)) + 1
-		output[i] = slice
+		sliceHeader.Data = uintptr(unsafe.Pointer(out))
 	}
 
 	// run callback if available
@@ -489,6 +489,11 @@ type Outlet struct {
 
 // Outlet will declare an outlet.
 func (o *Object) Outlet(typ Type, label string) *Outlet {
+	// check signal
+	if typ == Signal && len(o.out) > 0 {
+		panic("signal only supported as the first outlet")
+	}
+
 	// create outlet
 	outlet := &Outlet{obj: o, typ: typ, label: label}
 
