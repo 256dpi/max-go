@@ -1,6 +1,6 @@
 module github.com/256dpi/max-go
 
-go 1.14
+go 1.16
 
 require (
 	github.com/kr/pretty v0.2.1
