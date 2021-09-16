@@ -9,6 +9,7 @@ import (
 type Instance interface {
 	Init(obj *Object, args []Atom) bool
 	Handle(inlet int, msg string, data []Atom)
+	Process(input [][]float64, output [][]float64)
 	Free()
 }
 
@@ -75,6 +76,19 @@ func Register(name string, prototype Instance) {
 
 		// handle message
 		instance.Handle(inlet, msg, atoms)
+	}, func(obj *Object, input, output [][]float64) {
+		// get instance
+		mutex.Lock()
+		instance := instances[obj]
+		mutex.Unlock()
+
+		// return if nil
+		if instance == nil {
+			return
+		}
+
+		// process audio
+		instance.Process(input, output)
 	}, func(obj *Object) {
 		// get and delete instance
 		mutex.Lock()

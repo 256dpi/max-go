@@ -25,11 +25,12 @@ type Type string
 
 // The available inlet and outlet types.
 const (
-	Bang  Type = "bang"
-	Int   Type = "int"
-	Float Type = "float"
-	List  Type = "list"
-	Any   Type = "any"
+	Bang   Type = "bang"
+	Int    Type = "int"
+	Float  Type = "float"
+	List   Type = "list"
+	Any    Type = "any"
+	Signal Type = "signal"
 )
 
 func (t Type) enum() C.maxgo_type_e {
@@ -44,6 +45,8 @@ func (t Type) enum() C.maxgo_type_e {
 		return C.MAXGO_LIST
 	case Any:
 		return C.MAXGO_ANY
+	case Signal:
+		return C.MAXGO_SIGNAL
 	default:
 		panic("invalid type")
 	}
@@ -100,9 +103,22 @@ func gensym(str string) *C.t_symbol {
 
 /* Initialization */
 
-var initCallback func(*Object, []Atom) bool
-var handlerCallback func(*Object, int, string, []Atom)
-var freeCallback func(*Object)
+// InitCallback is called to initialize objects.
+type InitCallback func(obj *Object, atoms []Atom) bool
+
+// HandleCallback is called to handle messages.
+type HandleCallback func(obj *Object, inlet int, name string, atoms []Atom)
+
+// ProcessCallback is called to process audio.
+type ProcessCallback func(obj *Object, input, output [][]float64)
+
+// FreeCallback is called to free objects.
+type FreeCallback func(obj *Object)
+
+var initCallback InitCallback
+var handleCallback HandleCallback
+var processCallback ProcessCallback
+var freeCallback FreeCallback
 
 var initMutex sync.Mutex
 var initDone bool
@@ -129,11 +145,11 @@ func maxgoMain() {
 // callbacks to initialize and free objects. This function must be called from
 // the main packages main() function.
 //
-// The provided callbacks are called to initialize and object, handle messages
-// and free the object when it is not used anymore. The callbacks are usually
-// called on the Max main thread. However, the handler may be called from an
-// unknown thread in parallel to the other callbacks.
-func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, int, string, []Atom), free func(*Object)) {
+// The provided callbacks are called to initialize and object, handle messages,
+// process audio and free the object when it is not used anymore. The callbacks
+// are usually called on the Max main thread. However, the handler may be called
+// from an unknown thread in parallel to the other callbacks.
+func Init(name string, init InitCallback, handle HandleCallback, process ProcessCallback, free FreeCallback) {
 	// ensure mutex
 	initMutex.Lock()
 	defer initMutex.Unlock()
@@ -145,7 +161,8 @@ func Init(name string, init func(*Object, []Atom) bool, handler func(*Object, in
 
 	// set callbacks
 	initCallback = init
-	handlerCallback = handler
+	handleCallback = handle
+	processCallback = process
 	freeCallback = free
 
 	// initialize
@@ -163,7 +180,7 @@ var objects = map[uint64]*Object{}
 var objectsMutex sync.Mutex
 
 //export maxgoInit
-func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (uint64, int) {
+func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (uint64, int, int) {
 	// decode atoms
 	atoms := decodeAtoms(argc, argv)
 
@@ -185,13 +202,21 @@ func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (uint64, int) {
 	// call init callback
 	ok := initCallback(obj, atoms)
 	if !ok {
-		return 0, 0
+		return 0, 0, 0
 	}
 
-	// determine required proxies
+	// determine required proxies and signals
 	var proxies int
-	if len(obj.in) > 0 {
-		proxies = len(obj.in) - 1
+	var signals int
+	for _, inlet := range obj.in {
+		if inlet.Type() == Signal {
+			signals++
+		} else {
+			proxies++
+		}
+	}
+	if signals == 0 && proxies > 0 {
+		proxies--
 	}
 
 	// create outlets in reverse order
@@ -208,12 +233,14 @@ func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (uint64, int) {
 			outlet.ptr = C.listout(obj.ptr)
 		case Any:
 			outlet.ptr = C.outlet_new(obj.ptr, nil)
+		case Signal:
+			panic("signal outlet not supported yet")
 		default:
 			panic("invalid outlet type")
 		}
 	}
 
-	return ref, proxies
+	return ref, proxies, signals
 }
 
 //export maxgoHandle
@@ -264,9 +291,49 @@ func maxgoHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_ato
 		}
 	}
 
-	// call handler if available
-	if handlerCallback != nil {
-		handlerCallback(obj, int(inlet), name, atoms)
+	// run callback if available
+	if handleCallback != nil {
+		handleCallback(obj, int(inlet), name, atoms)
+	}
+}
+
+//export maxgoProcess
+func maxgoProcess(ref uint64, ins, outs **C.double, numIns, numOuts, samples C.long) {
+	// get object
+	objectsMutex.Lock()
+	obj, ok := objects[ref]
+	objectsMutex.Unlock()
+	if !ok {
+		return
+	}
+
+	// prepare input and output
+	input := make([][]float64, int(numIns))
+	output := make([][]float64, int(numOuts))
+
+	// convert inputs
+	for i := 0; i < int(numIns); i++ {
+		var slice []float64
+		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&slice))
+		sliceHeader.Cap = int(samples)
+		sliceHeader.Len = int(samples)
+		sliceHeader.Data = uintptr(unsafe.Pointer(ins)) + 1
+		input[i] = slice
+	}
+
+	// convert outputs
+	for i := 0; i < int(numOuts); i++ {
+		var slice []float64
+		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&slice))
+		sliceHeader.Cap = int(samples)
+		sliceHeader.Len = int(samples)
+		sliceHeader.Data = uintptr(unsafe.Pointer(outs)) + 1
+		output[i] = slice
+	}
+
+	// run callback if available
+	if processCallback != nil {
+		processCallback(obj, input, output)
 	}
 }
 
@@ -340,7 +407,7 @@ func maxgoFree(ref uint64) {
 		return
 	}
 
-	// call handler if available
+	// run callback if available
 	if freeCallback != nil {
 		freeCallback(obj)
 	}

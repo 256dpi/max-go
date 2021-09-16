@@ -34,10 +34,11 @@ extern void ext_main(void *r) { maxgoMain(); }
 static t_class *class = NULL;
 
 typedef struct {
-  t_object obj;
+  t_pxobject obj;
   long inlet;
   void **proxies;
   int num_proxies;
+  int num_signals;
   unsigned long long ref;
   void *clock;
 } t_bridge;
@@ -74,6 +75,9 @@ static void bridge_tick(void *ptr) {
       case MAXGO_ANY:
         outlet_anything(ret.r0, ret.r2, ret.r3, ret.r4);
         break;
+      case MAXGO_SIGNAL:
+        // TODO: Support.
+        break;
     }
 
     // free atoms
@@ -93,7 +97,7 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   t_bridge *bridge = object_alloc(class);
 
   // initialize object
-  struct maxgoInit_return ret = maxgoInit(&bridge->obj, argc, argv);  // (uint64, int)
+  struct maxgoInit_return ret = maxgoInit(&bridge->obj, argc, argv);  // ref, proxies, signals
 
   // set reference
   bridge->ref = ret.r0;
@@ -101,6 +105,14 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
   // check reference
   if (bridge->ref == 0) {
     return NULL;
+  }
+
+  // set number of signals
+  bridge->num_signals = ret.r2;
+
+  // setup dsp
+  if (bridge->num_signals > 0) {
+    dsp_setup(&bridge->obj, bridge->num_signals);
   }
 
   // save number of proxies
@@ -111,7 +123,7 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
 
   // create proxies
   for (int i = 0; i < bridge->num_proxies; i++) {
-    bridge->proxies[i] = proxy_new(&bridge->obj, bridge->num_proxies - i, &bridge->inlet);
+    bridge->proxies[i] = proxy_new(&bridge->obj, bridge->num_signals + bridge->num_proxies - i, &bridge->inlet);
   }
 
   // create clock
@@ -122,7 +134,7 @@ static void *bridge_new(t_symbol *name, long argc, t_atom *argv) {
 
 static void bridge_bang(t_bridge *bridge) {
   // get inlet
-  long inlet = proxy_getinlet(&bridge->obj);
+  long inlet = proxy_getinlet(&bridge->obj.z_ob);
 
   // handle message
   maxgoHandle(bridge->ref, "bang", inlet, 0, NULL);
@@ -130,7 +142,7 @@ static void bridge_bang(t_bridge *bridge) {
 
 static void bridge_int(t_bridge *bridge, long n) {
   // get inlet
-  long inlet = proxy_getinlet(&bridge->obj);
+  long inlet = proxy_getinlet(&bridge->obj.z_ob);
 
   // prepare args
   t_atom args[1] = {0};
@@ -142,7 +154,7 @@ static void bridge_int(t_bridge *bridge, long n) {
 
 static void bridge_float(t_bridge *bridge, double n) {
   // get inlet
-  long inlet = proxy_getinlet(&bridge->obj);
+  long inlet = proxy_getinlet(&bridge->obj.z_ob);
 
   // prepare args
   t_atom args[1] = {0};
@@ -154,10 +166,22 @@ static void bridge_float(t_bridge *bridge, double n) {
 
 static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *argv) {
   // get inlet
-  long inlet = proxy_getinlet(&bridge->obj);
+  long inlet = proxy_getinlet(&bridge->obj.z_ob);
 
   // handle message
   maxgoHandle(bridge->ref, msg->s_name, inlet, argc, argv);
+}
+
+static void bridge_dsp_perform(t_bridge *bridge, t_object *dsp64, double **ins, long numIns, double **outs,
+                               long numOuts, long samples, long flags, void *param) {
+  // process audio
+  maxgoProcess(bridge->ref, ins, outs, numIns, numOuts, samples);
+}
+
+static void bridge_dsp(t_bridge *bridge, t_object *dsp64, short *count, double sampleRate, long maxVectorSize,
+                       long flags) {
+  // add dsp handler
+  object_method(dsp64, gensym("dsp_add64"), bridge, bridge_dsp_perform, 0, NULL);
 }
 
 static void bridge_loadbang(t_bridge *bridge) {
@@ -198,6 +222,9 @@ static void bridge_free(t_bridge *bridge) {
   // free object
   maxgoFree(bridge->ref);
 
+  // free dsp
+  dsp_free(&bridge->obj);
+
   // free proxies
   for (int i = 0; i < bridge->num_proxies; i++) {
     object_free(bridge->proxies[i]);
@@ -221,12 +248,16 @@ void maxgo_init(char *name) {
   // create class
   class = class_new(name, (method)bridge_new, (method)bridge_free, (long)sizeof(t_bridge), 0L, A_GIMME, 0);
 
+  // init dsp
+  class_dspinit(class);
+
   // add generic methods
   class_addmethod(class, (method)bridge_bang, "bang", 0);
   class_addmethod(class, (method)bridge_int, "int", A_LONG, 0);
   class_addmethod(class, (method)bridge_float, "float", A_FLOAT, 0);
   class_addmethod(class, (method)bridge_gimme, "list", A_GIMME, 0);
   class_addmethod(class, (method)bridge_gimme, "anything", A_GIMME, 0);
+  class_addmethod(class, (method)bridge_dsp, "dsp64", A_CANT, 0);
   class_addmethod(class, (method)bridge_loadbang, "loadbang", 0);
   class_addmethod(class, (method)bridge_dblclick, "dblclick", 0);
   class_addmethod(class, (method)bridge_assist, "assist", A_CANT, 0);

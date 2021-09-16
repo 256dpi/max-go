@@ -6,6 +6,7 @@
 #endif
 
 #include <ext.h>
+#include <z_dsp.h>
 
 typedef enum {
   MAXGO_BANG = 0,
@@ -13,6 +14,7 @@ typedef enum {
   MAXGO_FLOAT,
   MAXGO_LIST,
   MAXGO_ANY,
+  MAXGO_SIGNAL,
 } maxgo_type_e;
 
 void maxgo_log(char *str);

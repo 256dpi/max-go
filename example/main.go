@@ -10,6 +10,7 @@ type instance struct {
 	in1   *max.Inlet
 	in2   *max.Inlet
 	in3   *max.Inlet
+	in4   *max.Inlet
 	out1  *max.Outlet
 	out2  *max.Outlet
 	out3  *max.Outlet
@@ -37,6 +38,7 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 	i.in1 = obj.Inlet(max.Any, "example inlet 1", true)
 	i.in2 = obj.Inlet(max.Float, "example inlet 2", false)
 	i.in3 = obj.Inlet(max.Int, "example inlet 3", false)
+	i.in4 = obj.Inlet(max.Signal, "example inlet 4", false)
 
 	// declare outlets
 	i.out1 = obj.Outlet(max.Any, "example outlet 1")
@@ -46,7 +48,7 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 	// bang second outlet from a timer
 	if !i.bench {
 		// create timer
-		i.tick = time.NewTicker(time.Second)
+		i.tick = time.NewTicker(10 * time.Second)
 
 		// send a bang for every tick
 		go func() {
@@ -84,6 +86,15 @@ func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 		i.out2.Float(data[0].(float64) * 2)
 	case 2:
 		i.out2.Float(float64(data[0].(int64) * 3))
+	}
+}
+
+var c int
+
+func (i *instance) Process(in, out [][]float64) {
+	c++
+	if c%20 == 0 {
+		max.Pretty("process", in, out)
 	}
 }
 
