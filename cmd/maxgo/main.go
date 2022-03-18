@@ -110,17 +110,30 @@ func buildDarwin(outDir string) {
 	// log
 	fmt.Println("==> building...")
 
-	// build
+	// prepare bin file
+	bin := filepath.Join("out", *name)
+
+	// build amd64 ad amr64
 	run("go",
-		[]string{"build", "-v", "-buildmode=c-shared", "-o", filepath.Join("out", *name)},
-		[]string{"CGO_ENABLED=1"},
+		[]string{"build", "-v", "-buildmode=c-shared", "-o", bin + "-amd64"},
+		[]string{"CGO_ENABLED=1", "GOARCH=amd64"},
+	)
+	run("go",
+		[]string{"build", "-v", "-buildmode=c-shared", "-o", bin + "-arm64"},
+		[]string{"CGO_ENABLED=1", "GOARCH=arm64"},
+	)
+
+	// assemble universal binary
+	run("lipo",
+		[]string{"-create", "-output", bin, bin + "-amd64", bin + "-arm64"},
+		nil,
 	)
 
 	// ensure directory
 	check(os.MkdirAll(filepath.Join(outDir, *name+".mxo", "MacOS"), os.ModePerm))
 
 	// copy binary
-	check(os.Rename(filepath.Join(outDir, *name), filepath.Join(outDir, *name+".mxo", "MacOS", *name)))
+	check(os.Rename(bin, filepath.Join(outDir, *name+".mxo", "MacOS", *name)))
 
 	// write info plist
 	check(ioutil.WriteFile(filepath.Join(outDir, *name+".mxo", "Info.plist"), []byte(infoPlist(*name)), os.ModePerm))
