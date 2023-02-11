@@ -113,7 +113,7 @@ func buildDarwin(outDir string) {
 	// prepare bin file
 	bin := filepath.Join("out", *name)
 
-	// build amd64 ad amr64
+	// build amd64 ad arm64
 	run("go",
 		[]string{"build", "-v", "-buildmode=c-shared", "-o", bin + "-amd64"},
 		[]string{"CGO_ENABLED=1", "GOARCH=amd64"},
