@@ -37,10 +37,10 @@ func main() {
 			panic("cannot cross compile for macOS from Windows")
 		}
 
-		// check mingw
-		_, err := exec.LookPath("x86_64-w64-mingw32-gcc")
+		// check zig
+		_, err := exec.LookPath("zig")
 		if err != nil {
-			panic("missing x86_64-w64-mingw32-gcc command (you may need to install mingw-w64)")
+			panic("missing zig command (you may need to install zig)")
 		}
 	}
 
@@ -160,7 +160,7 @@ func crossBuildWindows(outDir string) {
 	// build
 	run("go",
 		[]string{"build", "-v", "-buildmode=c-shared", "-o", filepath.Join(outDir, *name+".mxe64")},
-		[]string{"CC=x86_64-w64-mingw32-gcc", "GOOS=windows", "GOARCH=amd64", "CGO_ENABLED=1"},
+		[]string{`CC=zig cc -target x86_64-windows-gnu`, "GOOS=windows", "GOARCH=amd64", "CGO_ENABLED=1"},
 	)
 }
 

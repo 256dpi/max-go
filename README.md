@@ -27,10 +27,10 @@ This will install the `maxgo` command line utility. You may need to add Go's `bi
 echo 'export PATH=~/go/bin:$PATH' >> ~/.zprofile # for zsh
 ```
 
-Cross compilation on macOS for Windows additionally requires the `mingw-w64` toolchain:
+Cross compilation on macOS for Windows additionally requires the `zig` toolchain:
 
 ```sh
-brew install mingw-w64
+brew install zig
 ```
 
 ## Usage
