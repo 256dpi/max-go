@@ -116,11 +116,11 @@ func buildDarwin(outDir string) {
 	// build arm64 and amd64
 	run("go",
 		[]string{"build", "-v", "-buildmode=c-shared", "-o", bin + "-arm64"},
-		[]string{"CGO_ENABLED=1", "GOARCH=arm64"},
+		[]string{"CGO_ENABLED=1", "GOARCH=arm64", "CGO_LDFLAGS=-Wl,-no_fixup_chains"},
 	)
 	run("go",
 		[]string{"build", "-v", "-buildmode=c-shared", "-o", bin + "-amd64"},
-		[]string{"CGO_ENABLED=1", "GOARCH=amd64"},
+		[]string{"CGO_ENABLED=1", "GOARCH=amd64", "CGO_LDFLAGS=-Wl,-no_fixup_chains"},
 	)
 
 	// assemble universal binary
