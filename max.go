@@ -1,7 +1,7 @@
 package max
 
 // #cgo CFLAGS: -I${SRCDIR}/lib/max -I${SRCDIR}/lib/msp
-// #cgo windows CFLAGS: -DWIN_VERSION=1
+// #cgo windows CFLAGS: -DWIN_VERSION=1 -Wno-macro-redefined
 // #cgo darwin CFLAGS: -DMAC_VERSION=1
 // #cgo darwin LDFLAGS: -Wl,-undefined,dynamic_lookup
 // #cgo windows LDFLAGS: -L${SRCDIR}/lib/max/x64 -L${SRCDIR}/lib/msp/x64 -lMaxAPI -lMaxAudio
