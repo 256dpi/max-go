@@ -12,6 +12,11 @@ import (
 	"github.com/otiai10/copy"
 )
 
+// On macOS, we need to make sure that we always write external binaries to a
+// new file. Otherwise, kernel-side code-signing caches become outdated and Max
+// crashes with a SIGKILL when loading the modified external.
+// https://developer.apple.com/documentation/security/updating_mac_software
+
 var name = flag.String("name", "", "the name of the external")
 var out = flag.String("out", "out", "the output directory")
 var cross = flag.Bool("cross", false, "cross compile for Windows on macOS")
@@ -63,6 +68,10 @@ func main() {
 	fmt.Printf("name: %s\n", *name)
 	fmt.Printf("out: %s\n", outDir)
 
+	// clear directory (see top notes)
+	check(os.RemoveAll(outDir))
+	check(os.MkdirAll(outDir, os.ModePerm))
+
 	// build
 	switch runtime.GOOS {
 	case "darwin":
@@ -93,11 +102,13 @@ func main() {
 		// create path
 		check(os.MkdirAll(dir, os.ModePerm))
 
-		// copy external
+		// copy external (see top notes)
 		switch runtime.GOOS {
 		case "darwin":
+			check(os.RemoveAll(filepath.Join(dir, *name+".mxo")))
 			check(copy.Copy(filepath.Join(outDir, *name+".mxo"), filepath.Join(dir, *name+".mxo")))
 		case "windows":
+			check(os.RemoveAll(filepath.Join(dir, *name+".mxe64")))
 			check(copy.Copy(filepath.Join(outDir, *name+".mxe64"), filepath.Join(dir, *name+".mxe64")))
 		}
 	}
