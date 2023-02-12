@@ -1,4 +1,4 @@
-.PHONY: lib
+.PHONY: lib verify
 
 lib:
 	rm -rf ./lib
@@ -23,3 +23,7 @@ build: install
 
 build-cross: install
 	cd example; maxgo -name maxgo -cross -install maxgo
+
+verify:
+	clang verify/verify.c -o verify/verify
+	cd verify; ./verify
