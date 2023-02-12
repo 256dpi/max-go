@@ -120,14 +120,25 @@ var handleCallback HandleCallback
 var processCallback ProcessCallback
 var freeCallback FreeCallback
 
-var initMutex sync.Mutex
+var initOnce bool
 var initDone bool
+var initMutex sync.Mutex
 
 //go:linkname mainMain main.main
 func mainMain()
 
 //export maxgoMain
 func maxgoMain() {
+	// check init
+	initMutex.Lock()
+	once := initOnce
+	initOnce = true
+	initMutex.Unlock()
+	if once {
+		Error("main called again")
+		return
+	}
+
 	// call main
 	mainMain()
 
@@ -137,7 +148,7 @@ func maxgoMain() {
 
 	// check flag
 	if !initDone {
-		panic("not initialized")
+		Error("external not initialized")
 	}
 }
 
