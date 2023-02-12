@@ -1,6 +1,6 @@
-#include "_cgo_export.h"
-
 #include "max.h"
+
+#include "_cgo_export.h"
 
 /* Basic */
 
