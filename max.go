@@ -203,7 +203,7 @@ func maxgoInit(ptr unsafe.Pointer, argc int64, argv *C.t_atom) (uint64, int, int
 	obj := &Object{
 		ref:   ref,
 		ptr:   ptr,
-		queue: make(chan Event, 100),
+		queue: make(chan Event, 256),
 	}
 
 	// store object
