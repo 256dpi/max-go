@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"sync"
 	"sync/atomic"
+	"time"
 	"unsafe"
 
 	"github.com/kr/pretty"
@@ -450,8 +451,8 @@ func (o *Object) Push(events ...Event) {
 	for _, evt := range events {
 		select {
 		case o.queue <- evt:
-		default:
-			Error("dropped event due to full queue")
+		case <-time.After(5 * time.Second):
+			Error("dropped event after 5s due to full queue")
 		}
 	}
 
