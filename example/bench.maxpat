@@ -3,14 +3,14 @@
 		"fileversion" : 1,
 		"appversion" : 		{
 			"major" : 8,
-			"minor" : 1,
-			"revision" : 5,
+			"minor" : 5,
+			"revision" : 2,
 			"architecture" : "x64",
 			"modernui" : 1
 		}
 ,
 		"classnamespace" : "box",
-		"rect" : [ 345.0, 156.0, 874.0, 625.0 ],
+		"rect" : [ 933.0, 495.0, 874.0, 625.0 ],
 		"bglocked" : 0,
 		"openinpresentation" : 0,
 		"default_fontsize" : 12.0,
@@ -58,7 +58,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 480.0, 450.0, 75.0, 22.0 ],
-					"text" : "71.737397"
+					"text" : "230.594172"
 				}
 
 			}
@@ -189,9 +189,9 @@
 				"box" : 				{
 					"id" : "obj-30",
 					"maxclass" : "newobj",
-					"numinlets" : 2,
-					"numoutlets" : 3,
-					"outlettype" : [ "", "float", "bang" ],
+					"numinlets" : 4,
+					"numoutlets" : 4,
+					"outlettype" : [ "signal", "", "float", "bang" ],
 					"patching_rect" : [ 480.0, 330.0, 81.0, 22.0 ],
 					"text" : "maxgo bench"
 				}
@@ -217,7 +217,7 @@
 					"numoutlets" : 1,
 					"outlettype" : [ "" ],
 					"patching_rect" : [ 480.0, 420.0, 75.0, 22.0 ],
-					"text" : "66.68"
+					"text" : "736.625"
 				}
 
 			}
@@ -442,7 +442,7 @@
 			}
 , 			{
 				"patchline" : 				{
-					"destination" : [ "obj-30", 0 ],
+					"destination" : [ "obj-30", 1 ],
 					"order" : 1,
 					"source" : [ "obj-27", 0 ]
 				}
@@ -472,7 +472,7 @@
 , 			{
 				"patchline" : 				{
 					"destination" : [ "obj-28", 0 ],
-					"source" : [ "obj-30", 0 ]
+					"source" : [ "obj-30", 1 ]
 				}
 
 			}
@@ -563,7 +563,15 @@
 
 			}
  ],
-		"dependency_cache" : [  ],
+		"dependency_cache" : [ 			{
+				"name" : "ewma.mxo",
+				"type" : "iLaX"
+			}
+, 			{
+				"name" : "maxgo.mxo",
+				"type" : "iLaX"
+			}
+ ],
 		"autosave" : 0
 	}
 
