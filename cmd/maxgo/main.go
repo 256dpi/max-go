@@ -141,16 +141,16 @@ func buildDarwin(outDir string) {
 	)
 
 	// ensure directory
-	check(os.MkdirAll(filepath.Join(outDir, *name+".mxo", "MacOS"), os.ModePerm))
+	check(os.MkdirAll(filepath.Join(outDir, *name+".mxo", "Contents", "MacOS"), os.ModePerm))
 
 	// copy binary
-	check(os.Rename(bin, filepath.Join(outDir, *name+".mxo", "MacOS", *name)))
+	check(os.Rename(bin, filepath.Join(outDir, *name+".mxo", "Contents", "MacOS", *name)))
 
 	// write info plist
-	check(ioutil.WriteFile(filepath.Join(outDir, *name+".mxo", "Info.plist"), []byte(infoPlist(*name)), os.ModePerm))
+	check(ioutil.WriteFile(filepath.Join(outDir, *name+".mxo", "Contents", "Info.plist"), []byte(infoPlist(*name)), os.ModePerm))
 
 	// write package info
-	check(ioutil.WriteFile(filepath.Join(outDir, *name+".mxo", "PkgInfo"), []byte(pkgInfo), os.ModePerm))
+	check(ioutil.WriteFile(filepath.Join(outDir, *name+".mxo", "Contents", "PkgInfo"), []byte(pkgInfo), os.ModePerm))
 }
 
 func buildWindows(outDir string) {
