@@ -7,16 +7,18 @@ import (
 )
 
 type instance struct {
-	in1   *max.Inlet
-	in2   *max.Inlet
-	in3   *max.Inlet
-	in4   *max.Inlet
-	out1  *max.Outlet
-	out2  *max.Outlet
-	out3  *max.Outlet
-	out4  *max.Outlet
-	tick  *time.Ticker
-	bench bool
+	sigIn1   *max.Inlet
+	sigIn2   *max.Inlet
+	anyIn    *max.Inlet
+	floatIn  *max.Inlet
+	intIn    *max.Inlet
+	sigOut1  *max.Outlet
+	sigOut2  *max.Outlet
+	anyOut   *max.Outlet
+	floatOut *max.Outlet
+	bangOut  *max.Outlet
+	tick     *time.Ticker
+	bench    bool
 }
 
 func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
@@ -36,21 +38,23 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 	}
 
 	// declare inlets
-	i.in1 = obj.Inlet(max.Signal, "example inlet 1", false)
-	i.in2 = obj.Inlet(max.Any, "example inlet 2", true)
-	i.in3 = obj.Inlet(max.Float, "example inlet 3", false)
-	i.in4 = obj.Inlet(max.Int, "example inlet 4", false)
+	i.sigIn1 = obj.Inlet(max.Signal, "signal 1", false)
+	i.sigIn2 = obj.Inlet(max.Signal, "signal 2", false)
+	i.anyIn = obj.Inlet(max.Any, "any", true)
+	i.floatIn = obj.Inlet(max.Float, "float", false)
+	i.intIn = obj.Inlet(max.Int, "int", false)
 
 	// declare outlets
-	i.out1 = obj.Outlet(max.Signal, "example outlet 4")
-	i.out2 = obj.Outlet(max.Any, "example outlet 1")
-	i.out3 = obj.Outlet(max.Float, "example outlet 2")
-	i.out4 = obj.Outlet(max.Bang, "example outlet 3")
+	i.sigOut1 = obj.Outlet(max.Signal, "signal 1")
+	i.sigOut2 = obj.Outlet(max.Signal, "signal 2")
+	i.anyOut = obj.Outlet(max.Any, "any")
+	i.floatOut = obj.Outlet(max.Float, "float")
+	i.bangOut = obj.Outlet(max.Bang, "bang")
 
 	// bang second outlet from a timer
 	if !i.bench {
 		// create timer
-		i.tick = time.NewTicker(10 * time.Second)
+		i.tick = time.NewTicker(1 * time.Second)
 
 		// send a bang for every tick
 		go func() {
@@ -60,11 +64,11 @@ func (i *instance) Init(obj *max.Object, args []max.Atom) bool {
 
 				// bang immediately or defer
 				if j++; j%2 == 0 {
-					i.out4.Bang()
+					i.bangOut.Bang()
 				} else {
 					max.Defer(func() {
 						max.Pretty("defer", max.IsMainThread())
-						i.out4.Bang()
+						i.bangOut.Bang()
 					})
 				}
 			}
@@ -80,22 +84,29 @@ func (i *instance) Handle(inlet int, msg string, data []max.Atom) {
 		max.Pretty("handle", inlet, msg, data)
 	}
 
-	// echo or double
+	// echo, double or triple
 	switch inlet {
-	case 0:
-		// signal
-	case 1:
-		i.out2.Any(msg, data)
+	case 0, 1:
+		// signals
 	case 2:
-		i.out3.Float(data[0].(float64) * 2)
+		i.anyOut.Any(msg, data)
 	case 3:
-		i.out3.Float(float64(data[0].(int64) * 3))
+		i.floatOut.Float(data[0].(float64) * 2)
+	case 4:
+		i.floatOut.Float(float64(data[0].(int64) * 3))
 	}
 }
 
-func (i *instance) Process(input, output []float64) {
-	// copy data
-	copy(output, input)
+func (i *instance) Process(input, output [][]float64) {
+	// log
+	max.Pretty("process", len(input), len(output))
+
+	// scale output
+	for i := range input {
+		for j := range input[i] {
+			output[i][j] = input[i][j] / 2.0
+		}
+	}
 }
 
 func (i *instance) Loaded() {
