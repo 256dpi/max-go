@@ -10,7 +10,6 @@ import "C"
 
 import (
 	"fmt"
-	"reflect"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -645,11 +644,7 @@ func decodeAtoms(argc int64, argv *C.t_atom) []Atom {
 	}
 
 	// cast to slice
-	var list []C.t_atom
-	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&list))
-	sliceHeader.Cap = int(argc)
-	sliceHeader.Len = int(argc)
-	sliceHeader.Data = uintptr(unsafe.Pointer(argv))
+	list := unsafe.Slice(argv, int(argc))
 
 	// allocate result
 	atoms := make([]interface{}, len(list))
@@ -682,11 +677,7 @@ func encodeAtoms(atoms []Atom) (int64, *C.t_atom) {
 	array := (*C.t_atom)(unsafe.Pointer(C.getbytes(C.t_getbytes_size(len(atoms) * C.sizeof_t_atom))))
 
 	// cast to slice
-	var slice []C.t_atom
-	sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&slice))
-	sliceHeader.Cap = len(atoms)
-	sliceHeader.Len = len(atoms)
-	sliceHeader.Data = uintptr(unsafe.Pointer(array))
+	slice := unsafe.Slice(array, len(atoms))
 
 	// set atoms
 	for i, atom := range atoms {
