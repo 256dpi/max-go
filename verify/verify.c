@@ -47,7 +47,7 @@ void error(const char *str) { printf("%s: %s\n", __func__, str); }
 
 int main() {
     // open library
-	void *handle = dlopen("../example/out/maxgo.mxo/MacOS/maxgo", RTLD_NOW);
+	void *handle = dlopen("../example/out/maxgo.mxo/Contents/MacOS/maxgo", RTLD_NOW);
 	if (handle == NULL) {
 		fprintf(stderr, "%s\n", dlerror());
 		exit(1);
