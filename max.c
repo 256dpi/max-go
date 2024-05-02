@@ -174,12 +174,8 @@ static void bridge_gimme(t_bridge *bridge, t_symbol *msg, long argc, t_atom *arg
 
 static void bridge_dsp_perform(t_bridge *bridge, t_object *dsp64, double **ins, long numIns, double **outs,
                                long numOuts, long samples, long flags, void *param) {
-  // prepare input and output
-  double *input = numIns > 0 ? ins[0] : NULL;
-  double *output = numOuts > 0 ? outs[0] : NULL;
-
   // process audio
-  maxgoProcess(bridge->ref, input, output, samples);
+  maxgoProcess(bridge->ref, ins, outs, numIns, numOuts, samples);
 }
 
 static void bridge_dsp(t_bridge *bridge, t_object *dsp64, short *count, double sampleRate, long maxVectorSize,

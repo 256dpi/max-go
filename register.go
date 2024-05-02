@@ -20,7 +20,7 @@ type AdvancedInstance interface {
 
 // ProcessingInstance is an object that can processes audio.
 type ProcessingInstance interface {
-	Process(input, output []float64)
+	Process(input, output [][]float64)
 }
 
 // Register will initialize the Max class using the provided instance. This
@@ -80,7 +80,7 @@ func Register(name string, prototype Instance) {
 
 		// handle message
 		instance.Handle(inlet, msg, atoms)
-	}, func(obj *Object, input, output []float64) {
+	}, func(obj *Object, input, output [][]float64) {
 		// get instance
 		mutex.Lock()
 		instance := instances[obj]

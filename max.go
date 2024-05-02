@@ -111,7 +111,7 @@ type InitCallback func(obj *Object, atoms []Atom) bool
 type HandleCallback func(obj *Object, inlet int, name string, atoms []Atom)
 
 // ProcessCallback is called to process audio.
-type ProcessCallback func(obj *Object, input, output []float64)
+type ProcessCallback func(obj *Object, ins, outs [][]float64)
 
 // FreeCallback is called to free objects.
 type FreeCallback func(obj *Object)
@@ -321,7 +321,7 @@ func maxgoHandle(ref uint64, msg *C.char, inlet int64, argc int64, argv *C.t_ato
 }
 
 //export maxgoProcess
-func maxgoProcess(ref uint64, in, out *C.double, samples C.long) {
+func maxgoProcess(ref uint64, ins, outs **float64, numIns, numOuts uint8, samples int32) {
 	// get object
 	objectsMutex.Lock()
 	obj, ok := objects[ref]
@@ -330,31 +330,42 @@ func maxgoProcess(ref uint64, in, out *C.double, samples C.long) {
 		return
 	}
 
-	// prepare input and output
-	var input []float64
-	var output []float64
+	// prepare inputs and outputs
+	var inputs [][]float64
+	var outputs [][]float64
 
-	// convert input
-	if in != nil {
-		input = []float64{}
-		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&input))
-		sliceHeader.Cap = int(samples)
-		sliceHeader.Len = int(samples)
-		sliceHeader.Data = uintptr(unsafe.Pointer(in))
+	// convert inputs
+	insSlice := unsafe.Slice(ins, int(numIns))
+	for i := uint8(0); i < numIns; i++ {
+		inputs = append(inputs, unsafe.Slice(insSlice[i], int(samples)))
 	}
 
-	// convert output
-	if out != nil {
-		output = []float64{}
-		sliceHeader := (*reflect.SliceHeader)(unsafe.Pointer(&output))
-		sliceHeader.Cap = int(samples)
-		sliceHeader.Len = int(samples)
-		sliceHeader.Data = uintptr(unsafe.Pointer(out))
+	// convert outputs
+	outsSlice := unsafe.Slice(outs, int(numOuts))
+	for i := uint8(0); i < numOuts; i++ {
+		outputs = append(outputs, unsafe.Slice(outsSlice[i], int(samples)))
+	}
+
+	// max may use the same array for inputs and outputs, as the outlet order
+	// is internally reversed, we need to use a temporary array for capturing
+	// the outputs and then copy them back to the original array
+
+	// prepare temp outputs
+	var tempOuts [][]float64
+	for i := uint8(0); i < numOuts; i++ {
+		tempOuts = append(tempOuts, make([]float64, samples))
 	}
 
 	// run callback if available
 	if processCallback != nil {
-		processCallback(obj, input, output)
+		processCallback(obj, inputs, tempOuts)
+	}
+
+	// copy outputs reversed
+	for i := uint8(0); i < numOuts; i++ {
+		for j := int32(0); j < samples; j++ {
+			outputs[i][j] = tempOuts[i][j]
+		}
 	}
 }
 
@@ -471,8 +482,16 @@ type Inlet struct {
 // a default inlet to receive messages.
 func (o *Object) Inlet(typ Type, label string, hot bool) *Inlet {
 	// check signal
-	if typ == Signal && len(o.in) > 0 {
-		panic("signal only supported as the first inlet")
+	if typ == Signal {
+		var nonSignals int
+		for _, in := range o.in {
+			if in.typ != Signal {
+				nonSignals++
+			}
+		}
+		if nonSignals > 0 {
+			panic("signal only supported as first inlets")
+		}
 	}
 
 	// create inlet
@@ -505,8 +524,16 @@ type Outlet struct {
 // Outlet will declare an outlet.
 func (o *Object) Outlet(typ Type, label string) *Outlet {
 	// check signal
-	if typ == Signal && len(o.out) > 0 {
-		panic("signal only supported as the first outlet")
+	if typ == Signal {
+		var nonSignals int
+		for _, out := range o.out {
+			if out.typ != Signal {
+				nonSignals++
+			}
+		}
+		if nonSignals > 0 {
+			panic("signal only supported as first outlets")
+		}
 	}
 
 	// create outlet
